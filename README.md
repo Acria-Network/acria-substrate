@@ -1,4 +1,4 @@
-![Header](img/New%20Project.png)
+![Header](https://github.com/Acria-Network/Acria-Oracle-Node-Qt/blob/main/img/New%20Project.png)
 
 # Acria Substrate
 
