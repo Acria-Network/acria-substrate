@@ -6,6 +6,7 @@ Acria Substrate Blockchain implemented in Substrate/Rust
 
 ![GitHub](https://img.shields.io/github/license/Acria-Network/acria-substrate)
 ![GitHub last commit](https://img.shields.io/github/last-commit/Acria-Network/acria-substrate)
+![GitHub](https://img.shields.io/badge/Substrate-2.0.1-brightgreen)
 ![GitHub](https://img.shields.io/badge/OS-Linux%2FMacOS%2FWindows-brightgreen)
 ![GitHub](https://badgen.net/twitter/follow/acrianetwork)
 
