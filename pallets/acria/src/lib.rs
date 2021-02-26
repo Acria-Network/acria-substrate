@@ -1,9 +1,4 @@
 #![cfg_attr(not(feature = "std"), no_std)]
-
-/// Edit this file to define custom logic or remove it if it is not needed.
-/// Learn more about FRAME and the core library of Substrate FRAME pallets:
-/// https://substrate.dev/docs/en/knowledgebase/runtime/frame
-
 use frame_support::{decl_module, decl_storage, decl_event, decl_error, dispatch, traits::Get};
 use frame_system::ensure_signed;
 
@@ -25,7 +20,7 @@ decl_storage! {
 	// A unique name is used to ensure that the pallet's storage items are isolated.
 	// This name may be updated, but each pallet in the runtime must use a unique name.
 	// ---------------------------------vvvvvvvvvvvvvv
-	trait Store for Module<T: Trait> as TemplateModule {
+	trait Store for Module<T: Trait> as AcriaModule {
 		// Learn more about declaring storage items:
 		// https://substrate.dev/docs/en/knowledgebase/runtime/storage#declaring-storage-items
 		Something get(fn something): Option<u32>;
