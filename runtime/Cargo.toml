@@ -23,7 +23,7 @@ hex-literal = { optional = true, version = '0.3.1' }
 serde = { features = ['derive'], optional = true, version = '1.0.119' }
 
 # local dependencies
-pallet-template = { path = '../pallets/template', default-features = false, version = '2.0.1' }
+pallet-acria = { path = '../pallets/acria', default-features = false, version = '0.1.1' }
 
 # Substrate dependencies
 frame-benchmarking = { default-features = false, optional = true, version = '2.0.1' }
@@ -51,8 +51,8 @@ sp-session = { default-features = false, version = '2.0.1' }
 sp-std = { default-features = false, version = '2.0.1' }
 sp-transaction-pool = { default-features = false, version = '2.0.1' }
 sp-version = { default-features = false, version = '2.0.1' }
-pallet-contracts = { version = '2.0.1', default_features = false }
-pallet-contracts-primitives = { version = '2.0.1', default_features = false }
+pallet-contracts = { version = '2.0.0', default_features = false }
+pallet-contracts-primitives = { version = '2.0.0', default_features = false }
 pallet-contracts-rpc-runtime-api = { version = '0.8.1', default-features = false }
 
 
@@ -81,7 +81,7 @@ std = [
     'pallet-grandpa/std',
     'pallet-randomness-collective-flip/std',
     'pallet-sudo/std',
-    'pallet-template/std',
+    'pallet-acria/std',
     'pallet-timestamp/std',
     'pallet-transaction-payment/std',
     'pallet-transaction-payment-rpc-runtime-api/std',
