@@ -12,7 +12,7 @@ dependencies = [
 
 [[package]]
 name = "acria-node"
-version = "3.0.0"
+version = "0.1.1"
 dependencies = [
  "acria-node-runtime",
  "frame-benchmarking",
@@ -49,7 +49,7 @@ dependencies = [
 
 [[package]]
 name = "acria-node-runtime"
-version = "2.0.1"
+version = "0.1.1"
 dependencies = [
  "frame-benchmarking",
  "frame-executive",

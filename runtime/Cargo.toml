@@ -3,7 +3,7 @@ authors = ['William Freudenberger <williamfreudenberger@gmail.com>']
 edition = '2018'
 license = 'Unlicense'
 name = 'acria-node-runtime'
-version = '2.0.1'
+version = '0.1.1'
 
 [package.metadata.docs.rs]
 targets = ['x86_64-unknown-linux-gnu']
