@@ -314,7 +314,7 @@ construct_runtime!(
 		TransactionPayment: pallet_transaction_payment::{Module, Storage},
 		Sudo: pallet_sudo::{Module, Call, Config<T>, Storage, Event<T>},
 		// Include the custom logic from the Acria pallet in the runtime.
-		AcriaModule: pallet_acria::{Module, Call, Storage, Event<T>},
+		Acria: pallet_acria::{Module, Call, Storage, Event<T>},
 		// Include the custom logic from the Contracts pallet in the runtime.
 		Contracts: pallet_contracts::{Module, Call, Config, Storage, Event<T>},
 	}

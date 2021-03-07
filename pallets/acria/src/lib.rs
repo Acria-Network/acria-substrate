@@ -1,6 +1,8 @@
 #![cfg_attr(not(feature = "std"), no_std)]
-use frame_support::{decl_module, decl_storage, decl_event, decl_error, dispatch, traits::Get};
+use frame_support::{decl_module, decl_storage, decl_event, decl_error, dispatch, ensure};
 use frame_system::ensure_signed;
+use sp_std::prelude::*;
+
 
 #[cfg(test)]
 mod mock;
@@ -14,85 +16,71 @@ pub trait Trait: frame_system::Trait {
 	type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
 }
 
-// The pallet's runtime storage items.
-// https://substrate.dev/docs/en/knowledgebase/runtime/storage
+// The RUNTIME storage
 decl_storage! {
-	// A unique name is used to ensure that the pallet's storage items are isolated.
-	// This name may be updated, but each pallet in the runtime must use a unique name.
-	// ---------------------------------vvvvvvvvvvvvvv
 	trait Store for Module<T: Trait> as AcriaModule {
-		// Learn more about declaring storage items:
-		// https://substrate.dev/docs/en/knowledgebase/runtime/storage#declaring-storage-items
-		Something get(fn something): Option<u32>;
+		Oracle get(fn get_oracle): double_map hasher(twox_64_concat) T::AccountId, hasher(twox_64_concat) u32 => Option<Vec<u8>>;
 	}
 }
 
-// Pallets use events to inform users when important changes are made.
-// https://substrate.dev/docs/en/knowledgebase/runtime/events
+// Events definition to inform users when important changes are made.
 decl_event!(
 	pub enum Event<T> where AccountId = <T as frame_system::Trait>::AccountId {
-		/// Event documentation should end with an array that provides descriptive names for event
+		/// Event documentation ends with an array that provides descriptive names for event
 		/// parameters. [something, who]
-		SomethingStored(u32, AccountId),
+		NewOracle(u32, AccountId),
+		UpdatedOracle(u32, AccountId),
+		RemovedOracle(u32, AccountId),
+		QueryOracle(u32, AccountId),
 	}
 );
 
 // Errors inform users that something went wrong.
 decl_error! {
 	pub enum Error for Module<T: Trait> {
-		/// Error names should be descriptive.
+		/// Missing value
 		NoneValue,
-		/// Errors should have helpful documentation associated with them.
-		StorageOverflow,
+		/// Value is too short to be valid
+		TooShort,
+		/// Value is too long to be valid
+		TooLong,
+		/// Value is not valid
+		InvalidValue,
 	}
 }
 
-// Dispatchable functions allows users to interact with the pallet and invoke state changes.
-// These functions materialize as "extrinsics", which are often compared to transactions.
-// Dispatchable functions must be annotated with a weight and must return a DispatchResult.
+// Dispatchable functions to interact with this module
 decl_module! {
 	pub struct Module<T: Trait> for enum Call where origin: T::Origin {
-		// Errors must be initialized if they are used by the pallet.
+		// Errors initizialization
 		type Error = Error<T>;
-
-		// Events must be initialized if they are used by the pallet.
+		// Events inizialitation
 		fn deposit_event() = default;
-
-		/// An example dispatchable that takes a singles value as a parameter, writes the value to
-		/// storage and emits an event. This function must be dispatched by a signed extrinsic.
-		#[weight = 10_000 + T::DbWeight::get().writes(1)]
-		pub fn do_something(origin, something: u32) -> dispatch::DispatchResult {
+		// function to create a new ORACLE, the oracleid must be not already used and in the oracledata a json structure is expected with the following fields:
+		// - shortdescription - a short description not longer than 64 bytes
+		// - Long description  - a long description not longer than 6144 bytes
+		// - API url with %VAR% replacements if necessary - The endpoint of the API supplier
+		// example: {"shortdescription","xxxxxxxxxxxxxxxxxx","description","xxxxxxxxxxxxxxxxxxxxxxxxx","apiurl","https://api.supplier.com/price/?currency=BTC"}
+		#[weight = 500_000]
+		pub fn new_oracle(origin, oracleid: u32, oracledata: Vec<u8>) -> dispatch::DispatchResult {
 			// Check that the extrinsic was signed and get the signer.
-			// This function will return an error if the extrinsic is not signed.
-			// https://substrate.dev/docs/en/knowledgebase/runtime/origin
-			let who = ensure_signed(origin)?;
+			let sender = ensure_signed(origin)?;
+			// check oracle data
+			ensure!(oracledata.is_empty(), Error::<T>::NoneValue); //check not empty
+			ensure!(oracledata.len() >= 8, Error::<T>::TooShort); //check minimum length
+			ensure!(oracledata.len() <= 8192, Error::<T>::TooLong);  // check maximum length
+			// check oracleid
+			ensure!(oracleid > 0, Error::<T>::InvalidValue); //check for oracleid >0
 
 			// Update storage.
-			Something::put(something);
-
-			// Emit an event.
-			Self::deposit_event(RawEvent::SomethingStored(something, who));
+			let oraclestorage=oracledata.clone();
+			let oracleidstorage=oracleid.clone();
+			<Oracle<T>>::insert(&sender, oracleidstorage, oraclestorage);
+			// Emit an event
+			Self::deposit_event(RawEvent::NewOracle(oracleid, sender));
 			// Return a successful DispatchResult
 			Ok(())
 		}
-
-		/// An example dispatchable that may throw a custom error.
-		#[weight = 10_000 + T::DbWeight::get().reads_writes(1,1)]
-		pub fn cause_error(origin) -> dispatch::DispatchResult {
-			let _who = ensure_signed(origin)?;
-
-			// Read a value from storage.
-			match Something::get() {
-				// Return an error if the value has not been set.
-				None => Err(Error::<T>::NoneValue)?,
-				Some(old) => {
-					// Increment the value read from storage; will error in the event of overflow.
-					let new = old.checked_add(1).ok_or(Error::<T>::StorageOverflow)?;
-					// Update the value in storage with the incremented result.
-					Something::put(new);
-					Ok(())
-				},
-			}
-		}
+		
 	}
 }
