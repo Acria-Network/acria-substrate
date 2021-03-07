@@ -1,5 +1,5 @@
 [package]
-authors = ['William Freudenberger <williamfreudenberger@gmail.com>']
+authors = ['Poseidon - Acria Network <poseidon@acria.network>']
 build = 'build.rs'
 description = 'Acria Network Node'
 edition = '2018'
