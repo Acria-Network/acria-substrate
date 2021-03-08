@@ -46,6 +46,16 @@ decl_error! {
 		TooLong,
 		/// Value is not valid
 		InvalidValue,
+		/// Invalid Json Structure
+		InvalidJson,
+		/// Invalid Short Description of the Oracle
+		InvalidShortDescription,
+		/// Invalid Description of the Oracle
+		InvalidDescription,
+		/// Invalid Description of the Oracle
+		InvalidUrl,
+		/// Invalid Fees of the Oracle
+		InvalidFees,
 	}
 }
 
@@ -60,8 +70,8 @@ decl_module! {
 		// - shortdescription - a short description not longer than 64 bytes
 		// - Long description  - a long description not longer than 6144 bytes
 		// - API url with %VAR% replacements if necessary - The endpoint of the API supplier
-		// example: {"shortdescription","xxxxxxxxxxxxxxxxxx","description","xxxxxxxxxxxxxxxxxxxxxxxxx","apiurl","https://api.supplier.com/price/?currency=BTC"}
-		#[weight = 500_000]
+		// example: {"shortdescription","xxxxxxxxxxxxxxxxxx","description","xxxxxxxxxxxxxxxxxxxxxxxxx","apiurl","https://api.supplier.com/price/?currency=BTC","fees":0.0000001}
+		#[weight = 10_000]
 		pub fn new_oracle(origin, oracleid: u32, oracledata: Vec<u8>) -> dispatch::DispatchResult {
 			// Check that the extrinsic was signed and get the signer.
 			let sender = ensure_signed(origin)?;
@@ -71,7 +81,25 @@ decl_module! {
 			ensure!(oracledata.len() <= 8192, Error::<T>::TooLong);  // check maximum length
 			// check oracleid
 			ensure!(oracleid > 0, Error::<T>::InvalidValue); //check for oracleid >0
-
+			// check json validity
+			let js=oracledata.clone();
+			ensure!(json_check_validity(js),Error::<T>::InvalidJson);
+			// check short description
+			let jsf=oracledata.clone();
+			let shortdescription=json_get_value(jsf,"shortdescription".as_bytes().to_vec());
+			ensure!(shortdescription.len() >= 4, Error::<T>::InvalidShortDescription); //check minimum length for short description
+			// check (long) description
+			let jsd=oracledata.clone();
+			let description=json_get_value(jsd,"description".as_bytes().to_vec());
+			ensure!(description.len() >= 4, Error::<T>::InvalidDescription); //check minimum length for description
+			// check api url
+			let jsu=oracledata.clone();
+			let apiurl=json_get_value(jsu,"apiurl".as_bytes().to_vec());
+			ensure!(apiurl.len() >= 8, Error::<T>::InvalidUrl); //check minimum length for api url
+			// check fees
+			let jst=oracledata.clone();
+			let fees=json_get_value(jst,"fees".as_bytes().to_vec());
+			ensure!(fees.len() > 0, Error::<T>::InvalidFees); //check minimum length for the fees
 			// Update storage.
 			let oraclestorage=oracledata.clone();
 			let oracleidstorage=oracleid.clone();
@@ -83,4 +111,145 @@ decl_module! {
 		}
 		
 	}
+}
+// function to validate a json string
+fn json_check_validity(j:Vec<u8>) -> bool{	
+    // minimum lenght of 2
+    if j.len()<2 {
+        return false;
+    }
+    // checks star/end with {}
+    if *j.get(0).unwrap()==b'{' && *j.get(j.len()-1).unwrap()!=b'}' {
+        return false;
+    }
+    // checks start/end with []
+    if *j.get(0).unwrap()==b'[' && *j.get(j.len()-1).unwrap()!=b']' {
+        return false;
+    }
+    // check that the start is { or [
+    if *j.get(0).unwrap()!=b'{' && *j.get(0).unwrap()!=b'[' {
+            return false;
+    }
+    //checks that end is } or ]
+    if *j.get(j.len()-1).unwrap()!=b'}' && *j.get(j.len()-1).unwrap()!=b']' {
+        return false;
+    }
+    //checks " opening/closing and : as separator between name and values
+    let mut s:bool=true;
+    let mut d:bool=true;
+    let mut pg:bool=true;
+    let mut ps:bool=true;
+    let mut bp = b' ';
+    for b in j {
+        if b==b'[' && s {
+            ps=false;
+        }
+        if b==b']' && s && ps==false {
+            ps=true;
+        }
+        else if b==b']' && s && ps==true {
+            ps=false;
+        }
+        if b==b'{' && s {
+            pg=false;
+        }
+        if b==b'}' && s && pg==false {
+            pg=true;
+        }
+        else if b==b'}' && s && pg==true {
+            pg=false;
+        }
+        if b == b'"' && s && bp != b'\\' {
+            s=false;
+            bp=b;
+            d=false;
+            continue;
+        }
+        if b == b':' && s {
+            d=true;
+            bp=b;
+            continue;
+        }
+        if b == b'"' && !s && bp != b'\\' {
+            s=true;
+            bp=b;
+            d=true;
+            continue;
+        }
+        bp=b;
+    }
+    //fields are not closed properly
+    if !s {
+        return false;
+    }
+    //fields are not closed properly
+    if !d {
+        return false;
+    }
+    //fields are not closed properly
+    if !ps {
+        return false;
+    }
+    // every ok returns true
+    return true;
+}
+// function to get value of a field for Substrate runtime (no std library and no variable allocation)
+fn json_get_value(j:Vec<u8>,key:Vec<u8>) -> Vec<u8> {
+    let mut result=Vec::new();
+    let mut k=Vec::new();
+    let keyl = key.len();
+    let jl = j.len();
+    k.push(b'"');
+    for xk in 0..keyl{
+        k.push(*key.get(xk).unwrap());
+    }
+    k.push(b'"');
+    k.push(b':');
+    let kl = k.len();
+    for x in  0..jl {
+        let mut m=0;
+        let mut xx=0;
+        if x+kl>jl {
+            break;
+        }
+        for i in x..x+kl {
+            if *j.get(i).unwrap()== *k.get(xx).unwrap() {
+                m=m+1;
+            }
+            xx=xx+1;
+        }
+        if m==kl{
+            let mut lb=b' ';
+            let mut op=true;
+            let mut os=true;
+            for i in x+kl..jl-1 {
+                if *j.get(i).unwrap()==b'[' && op==true && os==true{
+                    os=false;
+                }
+                if *j.get(i).unwrap()==b'}' && op==true && os==false{
+                    os=true;
+                }
+                if *j.get(i).unwrap()==b':' && op==true{
+                    continue;
+                }
+                if *j.get(i).unwrap()==b'"' && op==true && lb!=b'\\' {
+                    op=false;
+                    continue
+                }
+                if *j.get(i).unwrap()==b'"' && op==false && lb!=b'\\' {
+                    break;
+                }
+                if *j.get(i).unwrap()==b'}' && op==true{
+                    break;
+                }
+                if *j.get(i).unwrap()==b',' && op==true && os==true{
+                    break;
+                }
+                result.push(j.get(i).unwrap().clone());
+                lb=j.get(i).unwrap().clone();
+            }   
+            break;
+        }
+    }
+    return result;
 }
