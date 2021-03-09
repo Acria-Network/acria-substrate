@@ -22,6 +22,8 @@ sp-std = { default-features = false, version = '2.0.1' }
 sp-runtime = { default-features = false, version = '2.0.1' }
 primitive-types =  { default-features = false, version = '0.7.3'}
 rand =  { default-features = false, version = '0.7.3'}
+#byteorder = { version = "1.4.2", default-features = false }
+
 
 
 [dev-dependencies]

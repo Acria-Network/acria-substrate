@@ -2,6 +2,10 @@
 use frame_support::{decl_module, decl_storage, decl_event, decl_error, dispatch, ensure};
 use frame_system::ensure_signed;
 use sp_std::prelude::*;
+use core::str;
+use core::str::FromStr;
+
+
 
 
 #[cfg(test)]
@@ -29,7 +33,6 @@ decl_event!(
 		/// Event documentation ends with an array that provides descriptive names for event
 		/// parameters. [something, who]
 		NewOracle(u32, AccountId),
-		UpdatedOracle(u32, AccountId),
 		RemovedOracle(u32, AccountId),
 		QueryOracle(u32, AccountId),
 	}
@@ -56,6 +59,8 @@ decl_error! {
 		InvalidUrl,
 		/// Invalid Fees of the Oracle
 		InvalidFees,
+        /// Oracle not found
+		OracleNotFound,
 	}
 }
 
@@ -70,13 +75,12 @@ decl_module! {
 		// - shortdescription - a short description not longer than 64 bytes
 		// - Long description  - a long description not longer than 6144 bytes
 		// - API url with %VAR% replacements if necessary - The endpoint of the API supplier
-		// example: {"shortdescription","xxxxxxxxxxxxxxxxxx","description","xxxxxxxxxxxxxxxxxxxxxxxxx","apiurl","https://api.supplier.com/price/?currency=BTC","fees":0.0000001}
+		// example: {"shortdescription":"xxxxxxxxxxxxxxxxxx","description":"xxxxxxxxxxxxxxxxxxxxxxxxx","apiurl":"https://api.supplier.com/price/?currency=BTC","fees":0.0000001}
 		#[weight = 10_000]
 		pub fn new_oracle(origin, oracleid: u32, oracledata: Vec<u8>) -> dispatch::DispatchResult {
 			// Check that the extrinsic was signed and get the signer.
 			let sender = ensure_signed(origin)?;
 			// check oracle data
-			ensure!(oracledata.is_empty(), Error::<T>::NoneValue); //check not empty
 			ensure!(oracledata.len() >= 8, Error::<T>::TooShort); //check minimum length
 			ensure!(oracledata.len() <= 8192, Error::<T>::TooLong);  // check maximum length
 			// check oracleid
@@ -99,7 +103,16 @@ decl_module! {
 			// check fees
 			let jst=oracledata.clone();
 			let fees=json_get_value(jst,"fees".as_bytes().to_vec());
-			ensure!(fees.len() > 0, Error::<T>::InvalidFees); //check minimum length for the fees
+            let fees_slice=fees.as_slice();
+            let fees_str=match str::from_utf8(&fees_slice){
+                Ok(f) => f,
+                Err(_) => "0"
+            };
+            let feesf:f64 = match f64::from_str(fees_str){
+                Ok(f) => f,
+                Err(_) => 0.0,
+            };
+			ensure!(feesf > 0.0, Error::<T>::InvalidFees); //check fees must be > 0
 			// Update storage.
 			let oraclestorage=oracledata.clone();
 			let oracleidstorage=oracleid.clone();
@@ -108,6 +121,23 @@ decl_module! {
 			Self::deposit_event(RawEvent::NewOracle(oracleid, sender));
 			// Return a successful DispatchResult
 			Ok(())
+		}
+        // function to remove an ORACLE, the oracleid must be created from the signer (only owner can remove the oracle)
+		#[weight = 10_000]
+		pub fn remove_oracle(origin, oracleid: u32) -> dispatch::DispatchResult {
+			// Check that the extrinsic was signed and get the signer.
+			let sender = ensure_signed(origin)?;
+            // chech that the oracle belongs to signer
+            match <Oracle<T>>::get(&sender,&oracleid){
+                // remove oracle
+                Some(_) => {
+                    <Oracle<T>>::take(&sender, &oracleid);
+                    Self::deposit_event(RawEvent::RemovedOracle(oracleid, sender));
+			        Ok(())
+                }
+                // error if not found
+                None => Err(Error::<T>::OracleNotFound.into()), 
+            }
 		}
 		
 	}
