@@ -12,7 +12,7 @@ Acria Substrate Blockchain implemented in Substrate/Rust
 
 One of the most pressing issues when developing smart contracts is the lack of real-world data. But due to technical limitations, such as the consensus protocol, no blockchain has been able to solve this major limitation. The Acria Network solves exactly this problem with the help of so-called Oracle Nodes that don't require a middleman. In addition to this, it offers cross-chain support to supply various blockchains with real-world data.
 
-[https://acria.network/](https://https://acria.network/)
+[https://acria.network/](https://acria.network/)
 
 # Acria Node
 
