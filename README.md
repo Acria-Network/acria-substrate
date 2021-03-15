@@ -49,3 +49,22 @@ You should select the connection to your node on top left, for example if your n
 it will be `ws://127.0.0.1`   or `ws://localhost`.
 
 
+### Api Interface
+
+The node offers the following application programming interfaces, accessible from the user interface above:
+
+ - acria.newOracle(oracleid,oracledata), a function to create a new ORACLE, the oracleid is an integer (u32) not already used and in the oracledata is a json structure with the following fields:  
+    - shortdescription - a short description not longer than 64 bytes  
+	- description  - a long description not longer than 6144 bytes  
+    - apiurl  - an https address as reference for the API, explaining the possible parameters if any.  
+    - fees - amount of fees applied to the requester.  
+    example: {"shortdescription":"xxxxxxxxxxxxxxxxxx","description":"xxxxxxxxxxxxxxxxxxxxxxxxx","apiurl":"https://api.supplier.com/documentation","fees":0.0000001}  
+ 
+ - acria.removeOracle(oracleid), a function to remove an ORACLE, only the original creator can remove it.  
+ 
+ - acria.requestOracleUpdate(oracleaccount,oracleid), is the function used to request a data update to the Acria Oracle Node.  
+ 
+ - acria.oracleUpdate(oracleid,oracledata), is the internal function used from the Oracle, to update the data on the blockchain.  
+		
+
+

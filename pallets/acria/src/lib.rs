@@ -1,14 +1,10 @@
 #![cfg_attr(not(feature = "std"), no_std)]
-use frame_support::{debug,decl_module, decl_storage, decl_event, decl_error, dispatch, ensure};
+use frame_support::{decl_module, decl_storage, decl_event, decl_error, dispatch, ensure};
 use frame_system::ensure_signed;
 use sp_std::prelude::*;
 use core::str;
 use core::str::FromStr;
-use sp_runtime::{
-	offchain as rt_offchain,
-};
-
-
+	
 
 #[cfg(test)]
 mod mock;
@@ -27,6 +23,7 @@ decl_storage! {
 	trait Store for Module<T: Trait> as AcriaModule {
 		Oracle get(fn get_oracle): double_map hasher(twox_64_concat) T::AccountId, hasher(twox_64_concat) u32 => Option<Vec<u8>>;
         OracleQuery get(fn get_oraclequery): double_map hasher(twox_64_concat) T::AccountId, hasher(twox_64_concat) u32 => Option<Vec<u8>>;
+        OracleData get(fn get_oracledata): double_map hasher(twox_64_concat) T::AccountId, hasher(twox_64_concat) u32 => Option<Vec<u8>>;
 	}
 }
 
@@ -37,7 +34,8 @@ decl_event!(
 		/// parameters. [something, who]
 		NewOracle(u32, AccountId),
 		RemovedOracle(u32, AccountId),
-		QueryOracle(u32, AccountId),
+		RequestOracleUpdate(u32, AccountId,Vec<u8>),
+        OracleUpdate(u32, AccountId),
 	}
 );
 
@@ -82,12 +80,11 @@ decl_module! {
 		fn deposit_event() = default;
 		// function to create a new ORACLE, the oracleid must be not already used and in the oracledata a json structure is expected with the following fields:
 		// - shortdescription - a short description not longer than 64 bytes
-		// - Long description  - a long description not longer than 6144 bytes
-		// - API url with %VAR% replacements if necessary - The endpoint of the API supplier
-        // - ##varname## coming from query can be replaced in the API call to the data provider
+		// - description  - a long description not longer than 6144 bytes
+        // - apiurl  - an https address as reference for the API, explaining the possible parameters if any.
+        // - fees - amount of fees applied to the requester.
         // Possible variables are:
-        // ##VARNAME## - Replace the var with the matching varname for example ##username## will be replace with the json field "username" received in the extrinsic.
-		// example: {"shortdescription":"xxxxxxxxxxxxxxxxxx","description":"xxxxxxxxxxxxxxxxxxxxxxxxx","apiurl":"https://api.supplier.com/price/?currency=BTC","fees":0.0000001}
+		// example: {"shortdescription":"xxxxxxxxxxxxxxxxxx","description":"xxxxxxxxxxxxxxxxxxxxxxxxx","apiurl":"https://api.supplier.com/documentation","fees":0.0000001}
 		#[weight = 10_000]
 		pub fn new_oracle(origin, oracleid: u32, oracledata: Vec<u8>) -> dispatch::DispatchResult {
 			// Check that the extrinsic was signed and get the signer.
@@ -161,110 +158,53 @@ decl_module! {
                 None => Err(Error::<T>::OracleNotFound.into()), 
             }
 		}
-        // function to query the Oracle
+        // function to request a data update to the Oracle identified from accountid/oracleid
 		#[weight = 50_000]
-        pub fn query_oracle(origin, oracleaccount: T::AccountId, oracleid: u32,parameters: Vec<u8>) -> dispatch::DispatchResult {
+        pub fn request_oracle_update(origin, oracleaccount: T::AccountId, oracleid: u32,parameters: Vec<u8>) -> dispatch::DispatchResult {
+            // verify it's a signed transaction
+            let _sender = ensure_signed(origin)?;
             // check presence oracleaccount/oracleid pair
-            let oracle = match <Oracle<T>>::get(&oracleaccount,&oracleid){
+            let _oracle = match <Oracle<T>>::get(&oracleaccount,&oracleid){
                 Some(oracle) =>  oracle,
                 // error if not found
                 None => return Err(Error::<T>::OracleNotFound.into()), 
             };
-            // get apiurl
-            let apiurl=json_get_value(oracle,"apiurl".as_bytes().to_vec());
-            if apiurl.len()==0 {
-                return Err(Error::<T>::OracleWrongConfiguration.into());
-            }
-            debug::info!("Api Url {:?}", apiurl);
-            //replace ##variables## if any
-            let mut pos=0;
-            let mut apiurlf =apiurl.clone();
-            loop {
-                // search for ##xxxxxxxxxx##
-                let searchsubject= match apiurl.get(pos..){
-                    Some(ss) => ss,
-                    None => break,
-                };
-                let buf=str::from_utf8(&searchsubject).unwrap();    
-                let p= match strpos("##",buf) {
-                    Some(ps) => ps,
-                    None => break,
-                };
-                pos=pos+p+2;
-                let searchsubject= match apiurl.get(pos..){
-                    Some(ss) => ss,
-                    None => break,
-                };
-                let buf=str::from_utf8(&searchsubject).unwrap();    
-                let pv= match strpos("##",buf){
-                    Some(ps) => ps,
-                    None => break,
-                };
-                let v = match apiurl.get(pos-2..pos+pv+2){
-                    Some(vv) => vv,
-                    None => "".as_bytes(),
-                };
-                let vh = match apiurl.get(pos..pos+pv){
-                    Some(vv) => vv,
-                    None => "".as_bytes(),
-                };
-                pos=pos+pv+2;
-                debug::info!("Variable name identified v:{:?} vh:{:?}", v,vh);
-                // exit from loop if no more ##xxxxxx###
-                if v.len()==0 {
-                    break
-                }
-                // get same name from json parameters
-                let p=parameters.clone();
-                let value=json_get_value(p,v.to_vec());
-                let valuestr=str::from_utf8(&value).unwrap();
-                // replace variable with value from parameters
-                let buf=str::from_utf8(&apiurlf).unwrap();
-                let search=str::from_utf8(&v).unwrap();
-                let newapi = str::replace(buf, search,valuestr);
-                apiurlf=newapi.into_bytes();
-                debug::info!("Api Url with vars replaced {:?}", apiurlf);
-            } 
-          
-            // call the off-chain worker
-            let apiurlstr= match str::from_utf8(&apiurl){
-                Ok(u) => u,
-                Err(_) => return Err(Error::<T>::OracleWrongConfiguration.into()),
-            };
-            let request = rt_offchain::http::Request::get(apiurlstr);
-            // setting timeout for https request to 4 seconds
-            let timeout = sp_io::offchain::timestamp()
-                .add(rt_offchain::Duration::from_millis(4000));
-            // sending the https request
-            let pending = request
-                .add_header("User-Agent", "Acria-Network")  // same api servers require an user/agent to be set 
-                .deadline(timeout) // Setting the timeout time
-                .send() // Sending the request out by the host
-                .map_err(|_| <Error<T>>::OracleFetchingError)?;
-            // By default, the http request is async from the runtime perspective. So we are asking the runtime to wait the answer.
-		    // The returning value here is a `Result` of `Result`, so we are unwrapping it twice by two `?`
-		    let response = pending
-                .try_wait(timeout)
-                .map_err(|_| <Error<T>>::OracleFetchingError)?
-                .map_err(|_| <Error<T>>::OracleFetchingError)?;
-            // checking for https error
-            if response.code != 200 {
-                debug::error!("Unexpected http request status code: {}", response.code);
-                return Err(Error::<T>::OracleFetchingError.into());
-            }
-            let apianswer=response.body().collect::<Vec<u8>>();
-            //let apianswer=off_chain_worker(apiurl);
+            /*
+            // we store the query in the blockchain for further processing (option ready to activate in case)
             let oracleaccountstorage=oracleaccount.clone();
             let oracleidstorage=oracleid.clone();
-            // we store the result in the blockchain
-			<OracleQuery<T>>::insert(&oracleaccountstorage, oracleidstorage,apianswer);
+            let oracleparametersstorage=parameters.clone();
+			<OracleQuery<T>>::insert(&oracleaccountstorage, oracleidstorage,oracleparametersstorage);
+            */
 			// Emit an event to report the "Oracle Query"
-			Self::deposit_event(RawEvent::QueryOracle(oracleid, oracleaccount));
-            // return back with positevely signal
+			Self::deposit_event(RawEvent::RequestOracleUpdate(oracleid, oracleaccount,parameters));
+            // return back with positevely signal */
+            Ok(())
+        }
+        // function to request a data update to the Oracle identified from accountid/oracleid
+		#[weight = 0]
+        pub fn oracle_update(origin, oracleid: u32,oracledata: Vec<u8>) -> dispatch::DispatchResult {
+            // verify it's a signed transaction
+            let sender = ensure_signed(origin)?;
+            // check presence oracleaccount/oracleid pair
+            let _oracle = match <Oracle<T>>::get(&sender,&oracleid){
+                Some(oracle) =>  oracle,
+                // error if not found
+                None => return Err(Error::<T>::OracleNotFound.into()), 
+            };
+            // we store the query in the blockchain for further processing
+            let oracleaccountstorage=sender.clone();
+            let oracleidstorage=oracleid.clone();
+			<OracleData<T>>::insert(&oracleaccountstorage, oracleidstorage,oracledata);
+			// Emit an event to report the "Oracle Query"
+			Self::deposit_event(RawEvent::OracleUpdate(oracleid, sender));
+            // return back with positevely signal */
             Ok(())
         }
 	}
 }
+
+
 // function to validate a json string
 fn json_check_validity(j:Vec<u8>) -> bool{	
     // minimum lenght of 2
@@ -406,6 +346,7 @@ fn json_get_value(j:Vec<u8>,key:Vec<u8>) -> Vec<u8> {
     }
     return result;
 }
+/*
 // function to get the position of an str insider another str, for no-std environment (equivalent to str.find() in std library)
 fn strpos(search: &str, subject: &str)-> Option<usize>{
     let seax=search.len();
@@ -426,33 +367,4 @@ fn strpos(search: &str, subject: &str)-> Option<usize>{
     }
     return None;
 }
-/*fn off_chain_worker(apiurl:Vec<u8>)-> Result<(), Error<T>> {
-    // call the off-chain worker
-    let apiurlstr= match str::from_utf8(&apiurl){
-        Ok(u) => u,
-        Err(_) => return Err(Error::<T>::OracleWrongConfiguration.into()),
-    };
-    let request = rt_offchain::http::Request::get(apiurlstr);
-    // setting timeout for https request to 4 seconds
-    let timeout = sp_io::offchain::timestamp()
-        .add(rt_offchain::Duration::from_millis(4000));
-    // sending the https request
-    let pending = request
-        .add_header("User-Agent", "Acria-Network")  // same api servers require an user/agent to be set 
-        .deadline(timeout) // Setting the timeout time
-        .send() // Sending the request out by the host
-        .map_err(|_| <Error<T>>::OracleFetchingError)?;
-    // By default, the http request is async from the runtime perspective. So we are asking the runtime to wait the answer.
-    // The returning value here is a `Result` of `Result`, so we are unwrapping it twice by two `?`
-    let response = pending
-        .try_wait(timeout)
-        .map_err(|_| <Error<T>>::OracleFetchingError)?
-        .map_err(|_| <Error<T>>::OracleFetchingError)?;
-    // checking for https error
-    if response.code != 200 {
-        debug::error!("Unexpected http request status code: {}", response.code);
-        return Err(Error::<T>::OracleFetchingError.into());
-    }
-    let apianswer=response.body().collect::<Vec<u8>>();
-    Ok(apianswer)
-}*/
+*/
