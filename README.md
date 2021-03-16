@@ -26,6 +26,7 @@ Please have a look at the [doc](./doc) directory for more information regarding
 * [How to create accounts](./doc/create-accounts.md)
 * [How to do balance transfers](./doc/balance-transfers.md)
 * [More details about running a node](./doc/run-node.md)
+
 ## Run the chain as standalone node
 
 Use Rust's native `cargo` command to build and launch the Acria node:
@@ -65,6 +66,28 @@ The node offers the following application programming interfaces, accessible fro
  - acria.requestOracleUpdate(oracleaccount,oracleid), is the function used to request a data update to the Acria Oracle Node.  
  
  - acria.oracleUpdate(oracleid,oracledata), is the internal function used from the Oracle, to update the data on the blockchain.  
+
+ For testing you should:  
+ 1) start the Blockchain node,  
+ 2) open the user interface (web user interface)[https://ipfs.io/ipns/dotapps.io/],  
+ 3) click on "Developer", "Extrinsics", "acria" and "newOracle",  
+ 4) select "Alice" account that will be the owner of the Oracle  
+ 5) insert "1" in the "oracleid" field  
+ 6) insert: 
+ ```
+ {"shortdescription":"Coingecko - Price BTC/USD","description":"Coingecko collect in real time the transaction from >20 exchanges and calculcate the average price every 60 seconds.","apiurl":"https://www.coingecko.com/","fees":0.1}  
+```
+in the field "oracledata",  
+7) Click on "Submit Transaction" and check for the events shown.  
+You should have stored a public Oracle in your blockchain.
+
+8) now start the (Acria Oracle Node)[./oracle-node/README.md] in another screen  
+9) from the web user interface select "acria" and "requestOracleUpdate",  
+10) insert "1" in the field "oracleid" and "na" in the field "parameters" that could used to send some data to the API, in this case "na" = not applicable.  
+11) click on "Submit Transaction",  
+12) check the log of the AON and you should see that it has received the update request from the events generated and it has update the blockchain with its own data.  
+
+
 		
 
 

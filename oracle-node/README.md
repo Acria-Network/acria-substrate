@@ -36,8 +36,10 @@ Once the Acria Substrate Node is started, launch:
 ```sh
 node acria-oracle-node.js  
 ```
-
+At the first run, a secret seed will be generated automatically for the "well known" account Alice used for testing in the user interface.  
 An event log will be shown on the screen.  
+
+
 
 
 
