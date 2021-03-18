@@ -67,6 +67,9 @@ The node offers the following application programming interfaces, accessible fro
  
  - acria.oracleUpdate(oracleid,oracledata), is the internal function used from the Oracle, to update the data on the blockchain.  
 
+ - acria.oracle(AccountId,Oracleid), allows to query the data written from the Oracle matching the AccountId and Oracleid. From the user interface you should select "Chain State","Acria", "Oracle".
+
+
  For testing you should:  
  1) start the Blockchain node,  
  2) open the user interface (web user interface)[https://ipfs.io/ipns/dotapps.io/],  
