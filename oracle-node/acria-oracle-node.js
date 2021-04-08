@@ -97,9 +97,26 @@ async function mainloop(){
                 conf.api.forEach( oracleconf => {
                     if (oracleconf.accountid==oracleaccount && oracleconf.oracleid==oracleid) {
                         console.log("[Info] Calling Endpoint: "+oracleconf.endpoint);
-                        fetch(oracleconf.endpoint)
-                            .then(res => res.text())
-                            .then(text => update_blockchain(api,keysPair,oracleconf.oracleid,text));                
+                        // replace variables eventually present in the endpoint
+                        let endpoint=aon_replace_url_with_parameters(oracleconf.endpoint,oracleparameters);
+                        // POST OF JSON fields to the endpoint
+                        if(oracleconf.method.toUpperCase()=="POST"){
+                            fetch(endpoint,
+                                { method: 'POST',
+                                  headers:{'Content-Type': 'application/json;charset=utf-8'},
+                                  body: JSON.stringify(oracleparameters)
+                                })
+                                .then(res => res.text())
+                                .then(text => update_blockchain(api,keysPair,oracleconf.oracleid,text));                
+                        }
+                        // GET of the endpoint
+                        else{
+                            method='GET';
+                            fetch(endpoint)
+                                .then(res => res.text())
+                                .then(text => update_blockchain(api,keysPair,oracleconf.oracleid,text));                
+                        }
+                        
                     }
                 });
             } else {
@@ -124,5 +141,29 @@ async function update_blockchain(api,keysPair,oracleid,data){
             console.log(`[Info] Writing Oracle Data - Status ${result.status}`);
           }
     });
+}
+
+// function to replace the variables in the endpoint with the parameters received
+// the parameters are URL escaped
+function aon_replace_url_with_parameters(url,parameters){
+    let jp;
+    let urlv=url;
+    // try to decode a json structure, if it's not valid return the url without changes
+    try{
+         jp=JSON.parse(parameters);
+    }
+    catch(err){
+        return url;
+    }
+    //replace variable by variable
+    for (var j in jp) {
+        if( jp.hasOwnProperty(j) ) {
+            let v='%'+j+'%';
+            console.log("urlv:",urlv);
+            urlv=urlv.replace(v,encodeURI(jp[j]));
+            console.log("name:",j,"value:",jp[j]);
+        }
+    }
+    return(urlv);
 }
 

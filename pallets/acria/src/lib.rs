@@ -170,7 +170,7 @@ decl_module! {
                 None => return Err(Error::<T>::OracleNotFound.into()), 
             };
             /*
-            // we store the query in the blockchain for further processing (option ready to activate in case)
+            // we store the query in the blockchain for further processing (option ready to be activated in case)
             let oracleaccountstorage=oracleaccount.clone();
             let oracleidstorage=oracleid.clone();
             let oracleparametersstorage=parameters.clone();
@@ -181,7 +181,7 @@ decl_module! {
             // return back with positevely signal */
             Ok(())
         }
-        // function to request a data update to the Oracle identified from accountid/oracleid
+        // function to write back the signed answer from the Oracle identified by accountid/oracleid
 		#[weight = 0]
         pub fn oracle_update(origin, oracleid: u32,oracledata: Vec<u8>) -> dispatch::DispatchResult {
             // verify it's a signed transaction

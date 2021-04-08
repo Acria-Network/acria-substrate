@@ -63,16 +63,25 @@ The node offers the following application programming interfaces, accessible fro
  
  - acria.removeOracle(oracleid), a function to remove an ORACLE, only the original creator can remove it.  
  
- - acria.requestOracleUpdate(oracleaccount,oracleid), is the function used to request a data update to the Acria Oracle Node.  
+ - acria.requestOracleUpdate(oracleaccount,oracleid,parameters), is the function used to request a data update to the Acria Oracle Node.  
  
+ The field "parameters" should be a json string to be used to replace the variable in the Oracle endpoint.  
+ For example sending in the "parameters":  
+ {"currencyfrom":"BTC","currencyto","USD"}
+ to an Oracle with endpoint: 
+ https://api.coingecko.com/api/v3/simple/price?ids=%currencyfrom%&vs_currencies=%currencyto%  
+ will generate a call to:  
+ https://api.coingecko.com/api/v3/simple/price?ids=BTC&vs_currencies=USD  
+ The variable replacement allows a greater flexibility in how to configure the Oracle endpoint.
+
+
  - acria.oracleUpdate(oracleid,oracledata), is the internal function used from the Oracle, to update the data on the blockchain.  
 
  - acria.oracle(AccountId,Oracleid), allows to query the data written from the Oracle matching the AccountId and Oracleid. From the user interface you should select "Chain State","Acria", "Oracle".
 
-
  For testing you should:  
  1) start the Blockchain node,  
- 2) open the user interface (web user interface)[https://ipfs.io/ipns/dotapps.io/],  
+ 2) open the user interface [web user interface](https://ipfs.io/ipns/dotapps.io/),  
  3) click on "Developer", "Extrinsics", "acria" and "newOracle",  
  4) select "Alice" account that will be the owner of the Oracle  
  5) insert "1" in the "oracleid" field  
