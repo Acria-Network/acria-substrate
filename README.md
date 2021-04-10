@@ -63,7 +63,7 @@ The node offers the following application programming interfaces, accessible fro
  
  - acria.removeOracle(oracleid), a function to remove an ORACLE, only the original creator can remove it.  
  
- - acria.requestOracleUpdate(oracleaccount,oracleid,parameters), is the function used to request a data update to the Acria Oracle Node.  
+ - acria.requestOracleUpdate(oracleaccount,oracleid,parameters), is the function used to request a data update to the Acria Oracle Node.  The fees published in the Oracle data, are settled immediately. 
  
  The field "parameters" should be a json string to be used to replace the variable in the Oracle endpoint.  
  For example sending in the "parameters":  
@@ -78,6 +78,11 @@ The node offers the following application programming interfaces, accessible fro
  - acria.oracleUpdate(oracleid,oracledata), is the internal function used from the Oracle, to update the data on the blockchain.  
 
  - acria.oracle(AccountId,Oracleid), allows to query the data written from the Oracle matching the AccountId and Oracleid. From the user interface you should select "Chain State","Acria", "Oracle".
+
+ - acria.lockOracleStakes(Accountid,amount), allows to lock Acria tokens to the AccountId of an Oracle. The funds are locked in the reserve of the signer and they are not in the availability of the Oracle.  
+
+ - acria.unlockOracleStakes(Accountid), allows to unlock all the Acria tokens locked previously to an Oracle. The funds are placed back in the free balance.  
+
 
  For testing you should:  
  1) start the Blockchain node,  

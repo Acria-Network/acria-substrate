@@ -293,9 +293,10 @@ impl pallet_sudo::Trait for Runtime {
 	type Call = Call;
 }
 
-/// Configure the acria pallet in pallets/acria.
+
 impl pallet_acria::Trait for Runtime {
 	type Event = Event;
+	type Currency = pallet_balances::Module<Runtime>;
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.

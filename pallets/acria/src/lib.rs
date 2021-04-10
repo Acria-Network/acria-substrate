@@ -1,10 +1,14 @@
 #![cfg_attr(not(feature = "std"), no_std)]
-use frame_support::{decl_module, decl_storage, decl_event, decl_error, dispatch, ensure};
+use frame_support::{
+    decl_module, decl_storage, decl_event, decl_error, dispatch, ensure,
+	traits::{Currency, ReservableCurrency},
+};
 use frame_system::ensure_signed;
 use sp_std::prelude::*;
 use core::str;
 use core::str::FromStr;
-	
+
+
 
 #[cfg(test)]
 mod mock;
@@ -12,18 +16,34 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
+pub type BalanceOf<T> = <<T as Trait>::Currency as Currency<<T as frame_system::Trait>::AccountId>>::Balance;
+
+
+
+//pub type BalanceOf<T> = <<T as Trait>::Currency as Currency<AccountIdOf<T>>>::Balance;
+
+
+//pub type BalanceOf<T> = <<T as Trait>::Currency as Currency<<T as system::Trait>::AccountId>>::Balance;
+
 /// Configure the pallet by specifying the parameters and types on which it depends.
 pub trait Trait: frame_system::Trait {
 	/// Because this pallet emits events, it depends on the runtime's definition of an event.
 	type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
+	/// The currency trait.
+    type Currency: Currency<Self::AccountId> + ReservableCurrency<Self::AccountId>;
 }
 
 // The RUNTIME storage
 decl_storage! {
 	trait Store for Module<T: Trait> as AcriaModule {
+        // Stores the Oracle data
 		Oracle get(fn get_oracle): double_map hasher(twox_64_concat) T::AccountId, hasher(twox_64_concat) u32 => Option<Vec<u8>>;
-        OracleQuery get(fn get_oraclequery): double_map hasher(twox_64_concat) T::AccountId, hasher(twox_64_concat) u32 => Option<Vec<u8>>;
+        // Stores the query for an Oracle (not yet activated)
+        //OracleQuery get(fn get_oraclequery): double_map hasher(twox_64_concat) T::AccountId, hasher(twox_64_concat) u32 => Option<Vec<u8>>;
+        // Stores the answer of the Oracle
         OracleData get(fn get_oracledata): double_map hasher(twox_64_concat) T::AccountId, hasher(twox_64_concat) u32 => Option<Vec<u8>>;
+        // Stores the stakes in Acria tokens for each Oracle (StakerAccountId )
+        OracleStakes get (fn get_oracle_account_stakes): double_map hasher(twox_64_concat) T::AccountId, hasher(twox_64_concat) T::AccountId => BalanceOf<T>; 
 	}
 }
 
@@ -31,11 +51,22 @@ decl_storage! {
 decl_event!(
 	pub enum Event<T> where AccountId = <T as frame_system::Trait>::AccountId {
 		/// Event documentation ends with an array that provides descriptive names for event
-		/// parameters. [something, who]
+        /// A new Oracle was added. \[OracleId, OracleAccountid\]
 		NewOracle(u32, AccountId),
+        /// An Oracle was deleted. \[OracleId, OracleAccountid\]
 		RemovedOracle(u32, AccountId),
+        /// An update request to an Oracle has been received. \[OracleId, OracleAccountid,RequestParameters \]
 		RequestOracleUpdate(u32, AccountId,Vec<u8>),
-        OracleUpdate(u32, AccountId),
+        /// An update request to an Oracle has been received. \[OracleId, OracleAccountid,RequestParameters \]
+		OracleUpdate(u32, AccountId),
+        /// A settlment for Oracle fees has been completed \[OracleId, OracleAccountid\]
+        OracleFeesSettlement(u32, AccountId),
+        /// A settlment for Oracle fees has been completed \[OracleId, OracleAccountid\]
+        StakerFeesSettlement(u32, AccountId),
+        /// An account has staken some Acria tokens to an Oracle.  \[StakerAccountId, OracleAccountIdOracleI,Amount\]
+        OracleLockedStakes(AccountId,AccountId),
+        /// An account has un-staken Acria tokens from an Oracle.  \[StakerAccountId, OracleAccountIdOracleI\]
+        OracleUnlockedStakes(AccountId,AccountId),
 	}
 );
 
@@ -68,6 +99,15 @@ decl_error! {
 		OracleWrongConfiguration,
         // Error returned during an Oracle Api Fetching
 		OracleFetchingError,
+        // Not enough funds available for the requested operation
+        NotEnoughFunds,
+        // Consisteny error
+        ConsistencyError,
+        // Oracle Fees Settlement Error
+        OracleSettlementError,
+        // Staker Fees Settlement Error
+        StakerSettlementError,
+
 	}
 }
 
@@ -84,7 +124,7 @@ decl_module! {
         // - apiurl  - an https address as reference for the API, explaining the possible parameters if any.
         // - fees - amount of fees applied to the requester.
         // Possible variables are:
-		// example: {"shortdescription":"xxxxxxxxxxxxxxxxxx","description":"xxxxxxxxxxxxxxxxxxxxxxxxx","apiurl":"https://api.supplier.com/documentation","fees":0.0000001}
+		// example: {"shortdescription":"xxxxxxxxxxxxxxxxxx","description":"xxxxxxxxxxxxxxxxxxxxxxxxx","apiurl":"https://api.supplier.com/documentation","fees":100}
 		#[weight = 10_000]
 		pub fn new_oracle(origin, oracleid: u32, oracledata: Vec<u8>) -> dispatch::DispatchResult {
 			// Check that the extrinsic was signed and get the signer.
@@ -127,11 +167,11 @@ decl_module! {
                 Ok(f) => f,
                 Err(_) => "0"
             };
-            let feesf:f64 = match f64::from_str(fees_str){
+            let feesf:u32 = match u32::from_str(fees_str){
                 Ok(f) => f,
-                Err(_) => 0.0,
+                Err(_) => 0,
             };
-			ensure!(feesf > 0.0, Error::<T>::InvalidFees); //check fees must be > 0
+			ensure!(feesf > 0, Error::<T>::InvalidFees); //check fees must be > 0
 			// Update storage.
 			let oraclestorage=oracledata.clone();
 			let oracleidstorage=oracleid.clone();
@@ -160,28 +200,97 @@ decl_module! {
 		}
         // function to request a data update to the Oracle identified from accountid/oracleid
 		#[weight = 50_000]
-        pub fn request_oracle_update(origin, oracleaccount: T::AccountId, oracleid: u32,parameters: Vec<u8>) -> dispatch::DispatchResult {
+        pub fn request_oracle_update(origin, oracleaccount: T::AccountId, oracleid: u32, parameters: Vec<u8>) -> dispatch::DispatchResult {
             // verify it's a signed transaction
-            let _sender = ensure_signed(origin)?;
+            let sender = ensure_signed(origin)?;
             // check presence oracleaccount/oracleid pair
-            let _oracle = match <Oracle<T>>::get(&oracleaccount,&oracleid){
+            let oracle = match <Oracle<T>>::get(&oracleaccount,&oracleid){
                 Some(oracle) =>  oracle,
                 // error if not found
                 None => return Err(Error::<T>::OracleNotFound.into()), 
             };
+            // get fees in u32
+            let fees=json_get_value(oracle,"fees".as_bytes().to_vec());
+            let fees_slice=fees.as_slice();
+            let fees_str=match str::from_utf8(&fees_slice){
+                Ok(f) => f,
+                Err(_) => "0"
+            };
+            let feesu:u32 = match u32::from_str(fees_str){
+                Ok(f) => f,
+                Err(_) => 0,
+            };
+            // compute 80% fees to dataprovider and 20% to stakers
+            let feesudp=feesu*80/100;
+            let feesf: BalanceOf<T> = feesu.into();
+            //let feesdp:BalanceOf<T> = feesf * 80 / 100;
+            let feesdp:BalanceOf<T> = feesudp.into();
+            let feess:BalanceOf<T> = feesf - feesdp;
+        
+            //let feesdp_balance: BalanceOf<T> = feesdp.into(); //KO
+            //let feesdp_balance= BalanceOf::<T>::from(feesdp); //KO
+            //let feesdp_balance: BalanceOf<T> = feesdp.unique_saturated_into(); //KO
+            //let feesdp_balance: BalanceOf<T> = BalanceOf::<T>::into(feesdp); //KO not compile
+            //let feesdp_balance: BalanceOf<T> = BalanceOf::<T>::UniqueSaturatedInto(feesdp); //KO not compile
+
+            //debug logging
+            //frame_support::debug::RuntimeLogger::init();
+            //frame_support::debug::debug!("************************************** feesdp_balance {:?}", feesdp_balance);
+            // transfer the fees to data provider
+            let _r = match T::Currency::transfer(&sender.clone(),&oracleaccount.clone(),feesdp, frame_support::traits::ExistenceRequirement::AllowDeath){
+                Ok(r) => r,
+                Err(_e)=> return Err(Error::<T>::OracleSettlementError.into()), 
+            };
+            //frame_support::debug::debug!("************************************** r {:?}", r);
+           
+            // calculate total stakes stored
+            let mut ik = <OracleStakes<T>>::iter_prefix(&oracleaccount);
+            let mut tot_stakes: BalanceOf<T> = 0u32.into();
+            loop {
+               // get staker account id and stakes amount
+               let (_staker_account,stakes_amount) = match ik.next(){
+                    Some((staker,stakes)) => (staker,stakes),
+                    None => break
+                };
+                tot_stakes=tot_stakes + stakes_amount;
+            }
+            // loop the stakers to settle the fees
+            let tot_fees: BalanceOf<T> = feess.into();
+            let mut iks = <OracleStakes<T>>::iter_prefix(&oracleaccount);
+            loop {
+               // get staker account id and stakes amount
+               let (staker_account,stakes_amount) = match iks.next(){
+                    Some((staker,stakes)) => (staker,stakes),
+                    None => break
+                };
+                //frame_support::debug::debug!("************************************** Staker {:?}", staker_account);
+                // compute the fees for the staker
+                let fees_stk=tot_fees / tot_stakes * stakes_amount;
+                //frame_support::debug::debug!("************************************** fees_stk {:?}", fees_stk);
+
+                // transfer the fees to the staker
+                let _r = match T::Currency::transfer(&sender,&staker_account.clone(),fees_stk, frame_support::traits::ExistenceRequirement::KeepAlive){
+                    Ok(r) => r,
+                    Err(_e)=>  return Err(Error::<T>::StakerSettlementError.into()), 
+                };
+            }
+            
+
             /*
-            // we store the query in the blockchain for further processing (option ready to be activated in case)
+            // We store the query in the blockchain for further processing (option ready to be activated in case)
             let oracleaccountstorage=oracleaccount.clone();
             let oracleidstorage=oracleid.clone();
             let oracleparametersstorage=parameters.clone();
 			<OracleQuery<T>>::insert(&oracleaccountstorage, oracleidstorage,oracleparametersstorage);
             */
+            
 			// Emit an event to report the "Oracle Query"
 			Self::deposit_event(RawEvent::RequestOracleUpdate(oracleid, oracleaccount,parameters));
             // return back with positevely signal */
             Ok(())
         }
         // function to write back the signed answer from the Oracle identified by accountid/oracleid
+        // the data provider is not charged for the data supplied
 		#[weight = 0]
         pub fn oracle_update(origin, oracleid: u32,oracledata: Vec<u8>) -> dispatch::DispatchResult {
             // verify it's a signed transaction
@@ -192,7 +301,7 @@ decl_module! {
                 // error if not found
                 None => return Err(Error::<T>::OracleNotFound.into()), 
             };
-            // we store the query in the blockchain for further processing
+            // we store the data in the blockchain for further processing
             let oracleaccountstorage=sender.clone();
             let oracleidstorage=oracleid.clone();
 			<OracleData<T>>::insert(&oracleaccountstorage, oracleidstorage,oracledata);
@@ -201,9 +310,44 @@ decl_module! {
             // return back with positevely signal */
             Ok(())
         }
+        // function to stake Acria Tokens to an Oracle
+        #[weight = 50_000]
+        pub fn lock_oracle_stakes(origin, oracleaccount: T::AccountId, amount: BalanceOf<T>) -> dispatch::DispatchResult {
+            // verify it's a signed transaction
+            let sender = ensure_signed(origin)?;
+            // try to lock the amount requested
+            let _r= match T::Currency::reserve(&sender, amount.clone()){
+                Ok(r) => r,
+                Err(_) => return Err(Error::<T>::NotEnoughFunds.into()), 
+            };
+            // removes previous stakes on same Oracle
+            let oracle_stakes = <OracleStakes<T>>::take(&oracleaccount,&sender);
+            // unlock the amount present for the previous Stakes if any
+            T::Currency::unreserve(&sender,oracle_stakes.clone());
+            // update the OracleStakes
+            <OracleStakes<T>>::insert(&oracleaccount, &sender,amount.clone());
+            // emits event for the successfully stakes reserved
+            Self::deposit_event(RawEvent::OracleLockedStakes(sender.clone(),oracleaccount.clone()));
+            // return back with positevely signal
+            Ok(())
+        }
+        // function to unstake Acria Tokens to an Oracle
+        #[weight = 50_000]
+        pub fn unlock_oracle_stakes(origin, oracleaccount: T::AccountId) -> dispatch::DispatchResult {
+            // verify it's a signed transaction
+            let sender = ensure_signed(origin)?;
+            // removes the stakes
+            let oracle_stakes = <OracleStakes<T>>::take(&oracleaccount,&sender);
+            // unlock the amount from the reserve
+            T::Currency::unreserve(&sender,oracle_stakes);
+            // emits event for the successfully stakes reserved
+            Self::deposit_event(RawEvent::OracleUnlockedStakes(sender,oracleaccount));
+            // return back with positevely signal
+            Ok(())
+        }
+        
 	}
 }
-
 
 // function to validate a json string
 fn json_check_validity(j:Vec<u8>) -> bool{	
