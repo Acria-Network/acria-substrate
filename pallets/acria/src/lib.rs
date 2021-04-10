@@ -7,6 +7,7 @@ use frame_system::ensure_signed;
 use sp_std::prelude::*;
 use core::str;
 use core::str::FromStr;
+use crate::sp_api_hidden_includes_decl_storage::hidden_include::sp_runtime::SaturatedConversion;
 
 
 
@@ -167,7 +168,7 @@ decl_module! {
                 Ok(f) => f,
                 Err(_) => "0"
             };
-            let feesf:u32 = match u32::from_str(fees_str){
+            let feesf:u128 = match u128::from_str(fees_str){
                 Ok(f) => f,
                 Err(_) => 0,
             };
@@ -216,36 +217,24 @@ decl_module! {
                 Ok(f) => f,
                 Err(_) => "0"
             };
-            let feesu:u32 = match u32::from_str(fees_str){
+            let feesu:u64 = match u64::from_str(fees_str){
                 Ok(f) => f,
                 Err(_) => 0,
             };
+            //let feesf8: BalanceOf<T> = feesu.saturated_into();
             // compute 80% fees to dataprovider and 20% to stakers
-            let feesudp=feesu*80/100;
-            let feesf: BalanceOf<T> = feesu.into();
-            //let feesdp:BalanceOf<T> = feesf * 80 / 100;
-            let feesdp:BalanceOf<T> = feesudp.into();
-            let feess:BalanceOf<T> = feesf - feesdp;
-        
-            //let feesdp_balance: BalanceOf<T> = feesdp.into(); //KO
-            //let feesdp_balance= BalanceOf::<T>::from(feesdp); //KO
-            //let feesdp_balance: BalanceOf<T> = feesdp.unique_saturated_into(); //KO
-            //let feesdp_balance: BalanceOf<T> = BalanceOf::<T>::into(feesdp); //KO not compile
-            //let feesdp_balance: BalanceOf<T> = BalanceOf::<T>::UniqueSaturatedInto(feesdp); //KO not compile
-
-            //debug logging
-            //frame_support::debug::RuntimeLogger::init();
-            //frame_support::debug::debug!("************************************** feesdp_balance {:?}", feesdp_balance);
+            let feesudp: u64 = feesu * 80 / 100;
+            let feesdp:BalanceOf<T> = feesudp.saturated_into();
+            let tot_fees_stakers: BalanceOf<T> = (feesu-feesudp).saturated_into();
             // transfer the fees to data provider
             let _r = match T::Currency::transfer(&sender.clone(),&oracleaccount.clone(),feesdp, frame_support::traits::ExistenceRequirement::AllowDeath){
                 Ok(r) => r,
                 Err(_e)=> return Err(Error::<T>::OracleSettlementError.into()), 
             };
-            //frame_support::debug::debug!("************************************** r {:?}", r);
-           
+
             // calculate total stakes stored
             let mut ik = <OracleStakes<T>>::iter_prefix(&oracleaccount);
-            let mut tot_stakes: BalanceOf<T> = 0u32.into();
+            let mut tot_stakes: BalanceOf<T> = 0u64.saturated_into();
             loop {
                // get staker account id and stakes amount
                let (_staker_account,stakes_amount) = match ik.next(){
@@ -254,22 +243,28 @@ decl_module! {
                 };
                 tot_stakes=tot_stakes + stakes_amount;
             }
+            //frame_support::debug::RuntimeLogger::init();
+            //frame_support::debug::info!("****************************************** tot_stakes {:?}", tot_stakes);
+
             // loop the stakers to settle the fees
-            let tot_fees: BalanceOf<T> = feess.into();
             let mut iks = <OracleStakes<T>>::iter_prefix(&oracleaccount);
             loop {
                // get staker account id and stakes amount
+               //frame_support::debug::info!("************************************** oracleaccount {:?}", oracleaccount);
                let (staker_account,stakes_amount) = match iks.next(){
                     Some((staker,stakes)) => (staker,stakes),
                     None => break
                 };
-                //frame_support::debug::debug!("************************************** Staker {:?}", staker_account);
+                //frame_support::debug::info!("************************************** Staker {:?}", staker_account);
                 // compute the fees for the staker
-                let fees_stk=tot_fees / tot_stakes * stakes_amount;
-                //frame_support::debug::debug!("************************************** fees_stk {:?}", fees_stk);
+                //frame_support::debug::info!("************************************** tot_fees_stakers {:?}", tot_fees_stakers);
+                //frame_support::debug::info!("****************************************** tot_stakes {:?}", tot_stakes);
+                //frame_support::debug::info!("************************************** stakes_amount {:?}", stakes_amount);
+                let fees_stk = (tot_fees_stakers * stakes_amount) / tot_stakes;
+                //frame_support::debug::info!("************************************** fees_stk {:?}", fees_stk);
 
                 // transfer the fees to the staker
-                let _r = match T::Currency::transfer(&sender,&staker_account.clone(),fees_stk, frame_support::traits::ExistenceRequirement::KeepAlive){
+                let _r = match T::Currency::transfer(&sender,&staker_account.clone(),fees_stk, frame_support::traits::ExistenceRequirement::AllowDeath){
                     Ok(r) => r,
                     Err(_e)=>  return Err(Error::<T>::StakerSettlementError.into()), 
                 };
