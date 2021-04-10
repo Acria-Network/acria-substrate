@@ -61,6 +61,13 @@ node acria-oracle-node.js
 At the first run, a secret seed will be generated automatically for the "well known" account Alice used for testing in the user interface.  
 An event log will be shown on the screen.  
 
+To launch the Acria-oracle-node for production environment creating a real account, your should delete the file acria-oracle-node.key and launch:  
+```sh
+node acria-oracle-node.js  --production
+```
+it will generate a strong 24 word secret seed used for the the real account where the fees are forwarded in real time.
+
+
 
 
 
