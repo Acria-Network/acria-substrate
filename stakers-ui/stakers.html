@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-giJF6kkoqNQ00vy+HMDP7azOuL0xtbfIcaT9wjKHr8RbDVddVHyTfAAsrekwKmP1" crossorigin="anonymous">
+    <title>Acria Network - Stakers Admin Panel</title>
+  </head>
+    <body onload="oraclesList()">
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <div class="container-fluid">
+          <a class="navbar-brand" href="#"><img src="/logo" width="30%" heigth="30%"><bold>Acria - Stakers</bold></a>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+          </button>
+          <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+              <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                  Information
+                </a>
+                <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                  <li><a class="dropdown-item" href="https://acria.network" >General Info</a></li>
+                  <li><a class="dropdown-item" href="#stakersInfo" data-bs-toggle="modal" data-bs-target="#stakersInfo">Stakers</a></li>
+                  <li><a class="dropdown-item" href="mailto:help@acria.network" >Support</a></li>
+                </ul>
+              </li>
+            </ul>
+            <!--<form class="d-flex">
+              <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
+              <button class="btn btn-outline-success" type="submit">Search</button>
+            </form> -->
+          </div>
+          
+          <!-- Modal  Stakers Info-->
+          <div class="modal fade" id="stakersInfo" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title" id="staticBackdropLabel">Stakers Info</h5>
+              </div>
+              <div class="modal-body">
+                  <span>Stakers can lock any amount of Acria Tokens to an Oracle Account and get a proportional share of fees reserved to stakers for each transaction. </span><br>
+                  <span>20% of fees paid on the transactions are reserved to stakers.</span><br>
+                  <span>The settlement of the fees is executed in real time, as soon you have some token locked you start to earn fees on the transactions to the selected Oracle.</span></br>
+                  <span>You can unlock any time the stakes and the Oracle has no access to your tokens that you see in "reserve" of your account.</span><br>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
+                  </div>
+              </div>
+            </div>
+            </div>
+          </div>
+      </nav>
+      <div class="container">
+        <div class="row">
+          <div class="col-sm" id="title">
+            <center><h1>Stakers - Admin Panel</h1></center>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-sm" id="lastblock"></div>
+          <div class="col-sm" id="accountBalance"></div>
+        </div>
+        <div class="row">
+          <div class="col-sm" id="hashlastblock"></div>
+          <div class="col-sm" id="accountAddress"></div>
+        </div>
+        <hr>
+        <div class="row" id="oracleList"></div>
+        <hr>
+        <div class="row" id="log"></div>
+        <hr>
+     </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/js/bootstrap.bundle.min.js" integrity="sha384-ygbV9kiqUc6oa4msXn9868pTtWMgiQaeYH7/t7LECLbyPA2x65Kgf80OJFdroafW" crossorigin="anonymous"></script>
+    <script>
+          // add event for modal view - Edit configuation to generate the table of Oracles' endpoints
+          //const veditOracle = document.getElementById('editOracle')
+          //veditOracle.addEventListener('shown.bs.modal', (event) => {
+          //      edit_oracle();
+          //});
+          // recurrent function to update the dashboard
+          setInterval(async function() { 
+            let url="/lastblock";
+            let response = await fetch(url);
+            if (response.ok) { 
+              let json = await response.json();
+              document.getElementById("lastblock").innerHTML = "<h1>"+json.number+"</h1><h6>Last Block</h6>";
+              document.getElementById("hashlastblock").innerHTML = "<small>"+json.parentHash+"</small><h6>Last Hash</h6>";
+  
+            } else {
+              document.getElementById("lastblock").innerHTML = "HTTP-Error: " + response.status;
+              document.getElementById("hashlastblock").innerHTML = "HTTP-Error: " + response.status;
+  
+            }
+            // get last block written in the blockchain from the node
+            let urlab="/accountbalance";
+            let responseab = await fetch(urlab);
+            if (responseab.ok) { 
+              let jsonab = await responseab.json();
+              document.getElementById("accountBalance").innerHTML = "<h1>"+jsonab.balance+"</h1><h6>Balance</h6>";
+              document.getElementById("accountAddress").innerHTML = "<small>"+jsonab.account+"</small><h6>Account</h6>";
+  
+            } else {
+              document.getElementById("accountBalance").innerHTML = "";
+              document.getElementById("accountAddress").innerHTML = "";
+            }
+            //get log data
+            let urlt="/logdata";
+            let responset = await fetch(urlt);
+            if (responset.ok) { 
+                let ht = await responset.text();
+                document.getElementById("log").innerHTML = ht;
+            } else {
+                document.getElementById("log").innerHTML = "";
+            }
+          }, 6000);
+          // function to show the Oracles table
+          async function oraclesList() {
+            let url="/oracleslist";
+            let response = await fetch(url);
+            if (response.ok) { 
+              let json = await response.json();
+              let answer='<table class="table table-striped"><thead><tr><th scope="col">Oracle Account</th><th scope="col">Id</th><th scope="col">Short Description</th></tr><th scope="col"></th><th scope="col"></th></thead>';
+              answer=answer+'<tbody>';
+              for (r in json.oracles){
+                answer=answer+'<tr>';
+                answer=answer+'<td>'+json.oracles[r].accountid+'</td>';
+                answer=answer+'<td>'+json.oracles[r].oracleid+'</td>';
+                answer=answer+'<td>'+json.oracles[r].shortdescription+'</td>';
+                // Stake icon
+                answer=answer+'<td><button type="button" class="btn btn-outline-success" onclick="stake_oracle('+json.oracles[r].oracleid+",'"+json.oracles[r].accountid+"','"+json.oracles[r].shortdescription+"','"+json.oracles[r].description+"','"+json.oracles[r].fees+"','"+json.oracles[r].apiurl+"',''"+');">';
+                answer=answer+'<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-box-arrow-up" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M3.5 6a.5.5 0 0 0-.5.5v8a.5.5 0 0 0 .5.5h9a.5.5 0 0 0 .5-.5v-8a.5.5 0 0 0-.5-.5h-2a.5.5 0 0 1 0-1h2A1.5 1.5 0 0 1 14 6.5v8a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 2 14.5v-8A1.5 1.5 0 0 1 3.5 5h2a.5.5 0 0 1 0 1h-2z"/><path fill-rule="evenodd" d="M7.646.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 1.707V10.5a.5.5 0 0 1-1 0V1.707L5.354 3.854a.5.5 0 1 1-.708-.708l3-3z"/></svg>';
+                answer=answer+'</button>';
+                answer=answer+'</td>';
+                answer=answer+'<td>';
+                // unStake icon
+                answer=answer+'<td><button type="button" class="btn btn-outline-danger" onclick="unstake_oracle('+json.oracles[r].oracleid+",'"+json.oracles[r].accountid+"','"+json.oracles[r].shortdescription+"','"+json.oracles[r].description+"','"+json.oracles[r].fees+"','"+json.oracles[r].apiurl+"',''"+');">';
+                answer=answer+'<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-box-arrow-in-down" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M3.5 6a.5.5 0 0 0-.5.5v8a.5.5 0 0 0 .5.5h9a.5.5 0 0 0 .5-.5v-8a.5.5 0 0 0-.5-.5h-2a.5.5 0 0 1 0-1h2A1.5 1.5 0 0 1 14 6.5v8a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 2 14.5v-8A1.5 1.5 0 0 1 3.5 5h2a.5.5 0 0 1 0 1h-2z"/><path fill-rule="evenodd" d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/></svg>';
+                answer=answer+'</button>';
+                answer=answer+'</td>';
+                answer=answer+'</tr>';
+              }
+              answer=answer+'</tbody></table>';
+              document.getElementById("oracleList").innerHTML =answer;
+            }
+            
+          }
+          // function to stake/un-stake funds agains an Oracle
+          async function stake_oracle(oracleid,accountid,shortdescription,description,fees,apiurl,error){
+            let h="<form><center><h2>Lock Funds -> Oracle</h2></center>";
+            if(error.length>0){
+                h=h+'<div class="text-danger">'+error+'</div>';
+            }
+            let secretseed='';
+            let amountlock="1.0";
+            //amount to stake
+            h=h+'<div class="row justify-content-start"> <label for="endpoint" class="col-3 col-form-label">Amount to lock</label>';
+            h=h+'<div class="col-8">';
+            h=h+'<input type="text" class="form-control-" id="amountlock" size=40 value="'+amountlock+'" >';
+            h=h+'</div></div>';  
+            //Secret Seed to Sign
+            h=h+'<div class="row justify-content-start"> <label for="endpoint" class="col-3 col-form-label">Secret Seed</label>';
+            h=h+'<div class="col-8">';
+            h=h+'<input type="text" class="form-control-" id="secretseed" size=55 value="'+secretseed+'">';
+            h=h+'</div></div>';  
+            //accountid
+            h=h+'<div class="row justify-content-start"> <label for="endpoint" class="col-3 col-form-label">Oracle Account</label>';
+            h=h+'<div class="col-8">';
+            h=h+'<input type="text" class="form-control-" id="accountid" size=55 value="'+accountid+'" readonly>';
+            h=h+'</div></div>';  
+            //oracle id
+            h=h+'<div class="row justify-content-start"> <label for="endpoint" class="col-3 col-form-label">Oracle Id</label>';
+            h=h+'<div class="col-8">';
+            h=h+'<input type="text" class="form-control-" id="oracleid" value="'+oracleid+'" readonly>';
+            h=h+'</div></div>';  
+            //oracle Short Description
+            h=h+'<div class="row justify-content-start"> <label for="endpoint" class="col-3 col-form-label">Description</label>';
+            h=h+'<div class="col-8">';
+            h=h+'<input type="text" class="form-control-" id="shortdescription" size=40 value="'+shortdescription+'" readonly>';
+            h=h+'</div></div>';  
+            //oracle  Description
+            h=h+'<div class="row justify-content-start"> <label for="endpoint" class="col-3 col-form-label">Details</label>';
+            h=h+'<div class="col-8">';
+            h=h+'<input type="text" class="form-control-" id="description" size=40 value="'+description+'" readonly>';
+            h=h+'</div></div>';  
+            //Url for documentation
+            h=h+'<div class="row justify-content-start"> <label for="endpoint" class="col-3 col-form-label">Documentation</label>';
+            h=h+'<div class="col-8">';
+            h=h+'<input type="hidden" name="apiurl" id="apiurl" value="'+apiurl+'">';
+            h=h+'<a href="'+apiurl+'">'+apiurl+'</a>';
+            h=h+'</div></div>';  
+            //Fees charged to requester
+            h=h+'<div class="row justify-content-start"> <label for="endpoint" class="col-3 col-form-label">Fees</label>';
+            h=h+'<div class="col-8">';
+            h=h+'<input type="text" class="form-control-" id="fees" value="'+fees/10000000000+'" readonly>';
+            h=h+'</div></div>';  
+            h=h+'<button type="button" class="btn btn-primary" onclick="stake_oracle_submit();">Lock Funds</button> ';
+            h=h+' <button type="button" class="btn btn-secondary" onclick="oraclesList();">Close</button>'
+            h=h+"</form>";     
+          document.getElementById("oracleList").innerHTML =h;
+        }
+        // function to stake/un-stake funds agains an Oracle
+        async function unstake_oracle(oracleid,accountid,shortdescription,description,fees,apiurl,error){
+            let h="<form><center><h2>Unlock Funds -> Oracle</h2></center>";
+            if(error.length>0){
+                h=h+'<div class="text-danger">'+error+'</div>';
+            }
+            let secretseed='';
+
+            //Secret Seed to Sign
+            h=h+'<div class="row justify-content-start"> <label for="endpoint" class="col-3 col-form-label">Secret Seed</label>';
+            h=h+'<div class="col-8">';
+            h=h+'<input type="text" class="form-control-" id="secretseed" size=55 value="'+secretseed+'">';
+            h=h+'</div></div>';  
+            //accountid
+            h=h+'<div class="row justify-content-start"> <label for="endpoint" class="col-3 col-form-label">Oracle Account</label>';
+            h=h+'<div class="col-8">';
+            h=h+'<input type="text" class="form-control-" id="accountid" size=55 value="'+accountid+'" readonly>';
+            h=h+'</div></div>';  
+            //oracle id
+            h=h+'<div class="row justify-content-start"> <label for="endpoint" class="col-3 col-form-label">Oracle Id</label>';
+            h=h+'<div class="col-8">';
+            h=h+'<input type="text" class="form-control-" id="oracleid" value="'+oracleid+'" readonly>';
+            h=h+'</div></div>';  
+            //oracle Short Description
+            h=h+'<div class="row justify-content-start"> <label for="endpoint" class="col-3 col-form-label">Description</label>';
+            h=h+'<div class="col-8">';
+            h=h+'<input type="text" class="form-control-" id="shortdescription" size=40 value="'+shortdescription+'" readonly>';
+            h=h+'</div></div>';  
+            //oracle  Description
+            h=h+'<div class="row justify-content-start"> <label for="endpoint" class="col-3 col-form-label">Details</label>';
+            h=h+'<div class="col-8">';
+            h=h+'<input type="text" class="form-control-" id="description" size=40 value="'+description+'" readonly>';
+            h=h+'</div></div>';  
+            //Url for documentation
+            h=h+'<div class="row justify-content-start"> <label for="endpoint" class="col-3 col-form-label">Documentation</label>';
+            h=h+'<div class="col-8">';
+            h=h+'<input type="hidden" name="apiurl" id="apiurl" value="'+apiurl+'">';
+            h=h+'<a href="'+apiurl+'">'+apiurl+'</a>';
+            h=h+'</div></div>';  
+            //Fees charged to requester
+            h=h+'<div class="row justify-content-start"> <label for="endpoint" class="col-3 col-form-label">Fees</label>';
+            h=h+'<div class="col-8">';
+            h=h+'<input type="text" class="form-control-" id="fees" value="'+fees/10000000000+'" readonly>';
+            h=h+'</div></div>';  
+            h=h+'<button type="button" class="btn btn-primary" onclick="unstake_oracle_submit();">Unlock Funds</button> ';
+            h=h+' <button type="button" class="btn btn-secondary" onclick="oraclesList();">Close</button>'
+            h=h+"</form>";     
+          document.getElementById("oracleList").innerHTML =h;
+        }
+        // function to stake funds calling the server
+        async function stake_oracle_submit(){
+            let accountid=document.getElementById("accountid").value;
+            let oracleid=document.getElementById("oracleid").value;
+            let amountlock=document.getElementById("amountlock").value;
+            let secretseed=document.getElementById("secretseed").value;
+            let shortdescription=document.getElementById("shortdescription").value;
+            let description=document.getElementById("description").value;
+            let apiurl=document.getElementById("apiurl").value;
+            let fees=document.getElementById("fees").value;
+            let url="/stakeoracle?oracleid="+encodeURIComponent(oracleid)+"&accountid="+encodeURIComponent(accountid);
+            url=url+"&amountlock="+encodeURIComponent(amountlock)+"&secretseed="+encodeURIComponent(secretseed);
+            let rs = await fetch(url);
+            let j= await rs.json(); // read response body and parse as json
+            if(j.answer=="OK"){
+                oraclesList();
+                return;
+            }
+            else {
+                let error=j.message;
+                stake_oracle(oracleid,accountid,shortdescription,description,fees,apiurl,error);
+                return;
+            }
+        }
+        // function to unstake funds calling the server
+        async function unstake_oracle_submit(){
+            let accountid=document.getElementById("accountid").value;
+            let oracleid=document.getElementById("oracleid").value;
+            let secretseed=document.getElementById("secretseed").value;
+            let shortdescription=document.getElementById("shortdescription").value;
+            let description=document.getElementById("description").value;
+            let apiurl=document.getElementById("apiurl").value;
+            let fees=document.getElementById("fees").value;
+            let url="/unstakeoracle?oracleid="+encodeURIComponent(oracleid)+"&accountid="+encodeURIComponent(accountid);
+            url=url+"&secretseed="+encodeURIComponent(secretseed);
+            let rs = await fetch(url);
+            let j= await rs.json(); // read response body and parse as json
+            if(j.answer=="OK"){
+                oraclesList();
+                return;
+            }
+            else {
+                let error=j.message;
+                unstake_oracle(oracleid,accountid,shortdescription,description,fees,apiurl,error);
+                return;
+            }
+        }
+    </script>
+    </body>
+</html>
