@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-giJF6kkoqNQ00vy+HMDP7azOuL0xtbfIcaT9wjKHr8RbDVddVHyTfAAsrekwKmP1" crossorigin="anonymous">
+    <title>Acria Oracle Bridge</title>
+  </head>
+  <body>
+    <!-- Main Navigation Bar and top menu -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <div class="container-fluid">
+          <a class="navbar-brand" href="/dashboard"><img src="/logo" width="100" heigth="100"><bold>Acria Node Bridge</bold></a>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+          </button>
+          <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+              <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                  Configuration
+                </a>
+                <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                  <li><a class="dropdown-item" href="#editConfiguration" data-bs-toggle="modal" data-bs-target="#editConfiguration">Edit</a></li>
+                </ul>
+              </li>
+              <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                  Information
+                </a>
+                <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                  <li><a class="dropdown-item" href="https://acria.network" >General Info</a></li>
+                  <li><a class="dropdown-item" href="#EndPointConfiguration" data-bs-toggle="modal" data-bs-target="#EndPointConfiguration">Endpoint Configuration</a></li>
+                  <li><a class="dropdown-item" href="#VariablesUsage" id="navbarDepartmentList" data-bs-toggle="modal" data-bs-target="#VariablesUsage">Variables</a></li>
+                  <li><a class="dropdown-item" href="https://acria.network/terms" >Terms of Service</a></li>
+                  <li><a class="dropdown-item" href="mailto:help@acria.network" >Support</a></li>
+                </ul>
+              </li>
+            </ul>           
+          </div>
+
+          <!-- Modal view to Edit the Configuration-->
+          <div class="modal fade" id="editConfiguration" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title" id="staticBackdropLabel">Edit Configuration</h5>
+                </div>
+              <div class="modal-body">
+                <div id="ConfigurationTable"></div>
+                </div>
+              </div>
+            </div>
+            </div>
+          </div>
+
+          <!-- Modal view to show the  information about the End Point Configuration-->
+          <div class="modal fade" id="EndPointConfiguration" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title" id="staticBackdropLabel">Endpoint Configuration</h5>
+              </div>
+              <div class="modal-body">
+                  The endpoint should be an URL that your node can reach to write the answer back in to the blockchain.<br> 
+                  Before to load and save it, you should test the URL using the utility "curl".<br>
+                  Curl is an open source utility, available for Linux, Mac Osx and Windows. <br>
+                  The main website is <a href="https://curl.se">https://curl.se</a><br><br>
+                  An example of a valid endpoint is: <br><br>
+                  https://api.coingecko.com/api/v3/simple/price?ids=BTC&vs_currencies=USD <br><br>
+                  or when used with variables:<br>
+                  https://api.coingecko.com/api/v3/simple/price?ids=%currencyfrom%&vs_currencies=%currencyto%  <br><br>
+                  <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
+              </div>
+            </div>
+            </div>
+          </div>
+          <!-- Modal view to show Variable Usage Info-->
+          <div class="modal fade" id="VariablesUsage" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title" id="staticBackdropLabel">Variable Usage</h5>
+              </div>
+              <div class="modal-body">
+                  The endpoint URL can contain variables to be replace with the parameter received in the update request.<br>
+                  This powerful feature allows you to use the same API for different scenario without developing multiple API.<br>
+                  The variable are identified in the url with double % sign. for example:<br>
+                  https://api.example.com/q=%coinsymbol% where there is a variable name "coinsymbol".<br><br>
+                  The requester of Oracle data, can pass a json structure with the field to be replaced, for example:<br>
+                  {"coinsymbol":"BTC"}<br><br>
+                  At the execution, the variable will be replace with the value BTC, resultin in a call to:<br>
+                  https://api.example.com/q=BTC<br><br>
+                  The json structure can contains any number of fields and if not matching variable are found in the endpoint URL, they are ignored.<br><br>
+                  <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
+              </div>
+            </div>
+            </div>
+          </div>
+      </nav>
+      <div class="row">
+        <div class="col-1"></div>
+        <div class="col-10">
+            <br><br><br>
+          <div><center><img src="/banner" width=60%></center></div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-1"></div>
+        <div class="col-10">
+            <br><br>
+            <hr>
+            <center><h1> General Info</h1></center>
+            <span>One of the most pressing issues when developing smart contracts is the lack of real-world data. </span><br>
+            <span>But due to technical limitations, such as the consensus protocol, no blockchain has been able to solve this major limitation.</span><br>
+            <span> The Acria Network solves exactly this problem with the help of so-called Oracle Nodes that don't require a middleman.</span> <br>
+            <span>In addition to this, it offers cross-chain support to supply various blockchains with real-world data.</span><br>
+            <a href="https://acria.network/">https://acria.network</a><br>
+            <hr>
+            <center><h1> Application Info</h1></center>
+            <span>This application allows to configure you Oracle Node. The configuration is loaded from, and saved to the file: acria-oracle.conf.</span><br> 
+            <span> The configuration is kep in readable json format that can be edited with any text editor.</span>
+            <hr> 
+        </div>
+      </div>    
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/js/bootstrap.bundle.min.js" integrity="sha384-ygbV9kiqUc6oa4msXn9868pTtWMgiQaeYH7/t7LECLbyPA2x65Kgf80OJFdroafW" crossorigin="anonymous"></script>
+    <script>
+        // add event for modal view - Edit configuation to generate the table of Oracles' endpoints
+        const veditConfiguration = document.getElementById('editConfiguration')
+        veditConfiguration.addEventListener('shown.bs.modal', (event) => {
+                edit_configuration();
+            });
+         // function to edit configuration showing a table with the list of configured Oracles (endpoint)
+         async function edit_configuration(){
+            let urlst="./getconfiguration";
+            let responsest = await fetch(urlst);
+            let json= await responsest.json(); // read response body and parse as json
+            // button to add a new Oracle
+            let answer='<button type="button" class="btn btn-outline-success" onclick="new_oracle('+"0,'','','get','',"+');">';
+            answer=answer+'<div><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-plus-circle" viewBox="0 0 16 16"><path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/><path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/></svg></div>';
+            answer=answer+'</button>';
+            // table header
+            answer=answer+'<table class="table table-striped"><thead><tr><th scope="col">#</th><th scope="col">Endpoint</th><th scope="col"></th><th scope="col"></th></tr></thead>';
+          answer=answer+'<tbody>';
+          for (r in json.api){
+            answer=answer+'<tr> <th scope="row">';
+            answer=answer+json.api[r].oracleid+'</th><td>'+json.api[r].endpoint+'</td>';
+            answer=answer+'<td>';
+            // editing icon
+            answer=answer+'<button type="button" class="btn btn-outline-success" onclick="edit_oracle('+json.api[r].oracleid+",'"+json.api[r].accountid+"','"+json.api[r].endpoint+"','"+json.api[r].method+"',''"+');">';
+            answer=answer+'<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-pencil-square" viewBox="0 0 16 16"><path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z"/><path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5v11z"/></svg>';
+            answer=answer+'</button>';
+            answer=answer+'</td>';
+            answer=answer+'<td>';
+            // trash bin icon
+            answer=answer+'<button type="button" class="btn btn-outline-danger" onclick="delete_oracle('+json.api[r].oracleid+",'"+json.api[r].accountid+"'"+');">';
+            answer=answer+'<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16"><path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/><path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/></svg>';
+            answer=answer+'</button>';
+            answer=answer+'</td>';
+            answer=answer+'</tr>';
+          }
+          answer=answer+'</tbody></table>';
+          answer=answer+'<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>'
+          document.getElementById("ConfigurationTable").innerHTML =answer;
+         }
+        // function to edit an Oracle configuration inside the same modal screen of the Oracle List
+        async function edit_oracle(oracleid,accountid,endpoint,method,error) {
+          let h="<form>";
+          if(error.length>0){
+            h=h+'<div class="text-danger">'+error+'</div>';
+          }
+          //endpoint
+          h=h+'<div class="row justify-content-start"> <label for="endpoint" class="col-3 col-form-label">Oracle Endpoint</label>';
+          h=h+'<div class="col-8">';
+          h=h+'<input type="text" class="form-control-" id="endpoint" size=55 value="'+endpoint+'">';
+          h=h+'</div></div>';  
+          //method
+          h=h+'<div class="row justify-content-start"> <label for="method" class="col-3 col-form-label">Method</label>';
+          h=h+'<div class="col-8">';
+          h=h+'<select name="method" id="method"><option value="'+method+'">'+method+'</option>';
+          if(method=="get"){
+            h=h+'<option value="post">post</option>';
+          }else{
+            h=h+'<option value="get">get</option>';  
+          }
+          h=h+'</select></div></div>';  
+          //account id
+          h=h+'<div class="row justify-content-start"> <label for="accountid" class="col-3 col-form-label">Account Id</label>';
+          h=h+'<div class="col-8">';
+          h=h+'<input type="text" class="form-control-" id="accountid" size=55 value="'+accountid+'" readonly>';
+          h=h+'</div></div>';  
+          //oracle id
+          h=h+'<div class="row justify-content-start"> <label for="oracleid" class="col-3 col-form-label">Oracle Id</label>';
+          h=h+'<div class="col-8">';
+          h=h+'<input type="text" class="form-control-" id="oracleid" value="'+oracleid+'" readonly>';
+          h=h+'</div></div>';  
+          h=h+'<button type="button" class="btn btn-primary" onclick="oracle_save(false);">Save</button> ';
+          h=h+' <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>'
+          h=h+"</form>";     
+          document.getElementById("ConfigurationTable").innerHTML =h;
+        }
+        // function to add a new the Oracle configuration inside the same modal screen of the Oracle List
+        async function new_oracle(oracleid,accountid,endpoint,method,error) {
+          let h="<form>";
+          if(error.length>0){
+            h=h+'<div class="text-danger">'+error+'</div>';
+          }
+          //endpoint
+          h=h+'<div class="row justify-content-start"> <label for="endpoint" class="col-3 col-form-label">Oracle Endpoint</label>';
+          h=h+'<div class="col-8">';
+          h=h+'<input type="text" class="form-control-" id="endpoint" size=55 value="'+endpoint+'">';
+          h=h+'</div></div>';  
+          //method
+          h=h+'<div class="row justify-content-start"> <label for="method" class="col-3 col-form-label">Method</label>';
+          h=h+'<div class="col-8">';
+          h=h+'<select name="method" id="method"><option value="'+method+'">'+method+'</option>';
+          if(method=="get"){
+            h=h+'<option value="post">post</option>';
+          }else{
+            h=h+'<option value="get">get</option>';  
+          }
+          h=h+'</select></div></div>';  
+          //account id
+          h=h+'<div class="row justify-content-start"> <label for="accountid" class="col-3 col-form-label">Account Id</label>';
+          h=h+'<div class="col-8">';
+          h=h+'<input type="text" class="form-control-" id="accountid" size=55 value="'+accountid+'">';
+          h=h+'</div></div>';  
+          //oracle id
+          h=h+'<div class="row justify-content-start"> <label for="oracleid" class="col-3 col-form-label">Oracle Id</label>';
+          h=h+'<div class="col-8">';
+          h=h+'<input type="text" class="form-control-" id="oracleid" value="'+oracleid+'">';
+          h=h+'</div></div>';  
+          h=h+'<button type="button" class="btn btn-primary" onclick="oracle_save(true);">Save</button> ';
+          h=h+' <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>'
+          h=h+"</form>";     
+          document.getElementById("ConfigurationTable").innerHTML =h;
+        }
+        // function to save the oracle data
+        async function oracle_save(n){
+            let endpoint=document.getElementById("endpoint").value;
+            let method=document.getElementById("method").value;
+            let accountid=document.getElementById("accountid").value;
+            let oracleid=document.getElementById("oracleid").value;
+            let url="/saveoracle?oracleid="+encodeURIComponent(oracleid)+"&accountid="+encodeURIComponent(accountid);
+            url=url+"&endpoint="+encodeURIComponent(endpoint)+"&method="+encodeURIComponent(method);
+            let rs = await fetch(url);
+            let j= await rs.json(); // read response body and parse as json
+            if(j.answer=="OK"){
+                edit_configuration();
+                return;
+            }
+            else {
+                let error=j.message;
+                if(n==true){
+                    new_oracle(oracleid,accountid,endpoint,method,error);    
+                }else{
+                    edit_oracle(oracleid,accountid,endpoint,method,error);
+                }
+                return;
+            }
+        }
+        // function to delete oracle
+        async function delete_oracle(oracleid,accountid){
+            let isDelete = confirm("Do you confirm the cancellation of this oracle?"+accountid+"-"+oracleid);
+            if (isDelete) {
+                let url="/deleteoracle?oracleid="+encodeURIComponent(oracleid)+"&accountid="+encodeURIComponent(accountid);
+                let rs = await fetch(url);
+                let j= await rs.json(); // read response body and parse as json
+                alert(j.answer);
+                if(j.answer=="OK"){
+                    edit_configuration();
+                    return;
+                }
+                else {
+                    let error=j.message;
+                    edit_configuration(error)
+                    return;
+                }
+            }
+        }
+        
+    </script>
+  </body>
+  </html>

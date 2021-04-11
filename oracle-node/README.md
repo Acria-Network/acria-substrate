@@ -28,9 +28,18 @@ const LOGFILE="./acria-oracle-node.log";            //log file name
 // end customization section
 ```
 You should add the Oracle configuration to the blockchain by the extrinsic "acria.newOracle" from the user interface.  
-You should configure the file acria-oracle-node.conf to match your endpoints to send back the data.  
-The default method in the acria-oracle-node.conf is "GET", you can make a POST of json fields, adding "method":"post") in the configuration  for example:  
+You have to configure the file acria-oracle-node.conf to match your endpoints to send back the data.  
+You can edit the file above with your text editor or use the configuration web app with:
+```sh
+node acria-oracle-bridge.js
+```
+and open your browser to:  
+```
+http://yourhostname:3000
+```
+if your are not able to connect please check the firewall configuration.  
 
+The default method in the acria-oracle-node.conf is "GET", you can make a POST of json fields, adding "method":"post") in the configuration  for example:  
 {"accountid":"5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY","oracleid":1,"endpoint":"https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=USD","method":"post"},
 
 

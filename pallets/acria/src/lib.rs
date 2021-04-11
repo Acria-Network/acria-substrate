@@ -168,7 +168,7 @@ decl_module! {
                 Ok(f) => f,
                 Err(_) => "0"
             };
-            let feesf:u128 = match u128::from_str(fees_str){
+            let feesf:u64 = match u64::from_str(fees_str){
                 Ok(f) => f,
                 Err(_) => 0,
             };

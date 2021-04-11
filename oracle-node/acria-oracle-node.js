@@ -3,8 +3,8 @@
 // it make its work writing the blockchain with the new data requested.
 const { ApiPromise, WsProvider } = require('@polkadot/api');    
 const { Keyring } = require('@polkadot/api');
-const {mnemonicGenerate,mnemonicToMiniSecret,naclKeypairFromSeed,naclDecrypt,naclEncrypt} = require('@polkadot/util-crypto');
-const { u8aToHex,stringToU8a,u8aToString,hexToU8a,isHex } =require('@polkadot/util');
+const {mnemonicGenerate,naclDecrypt,naclEncrypt} = require('@polkadot/util-crypto');
+const { stringToU8a,u8aToString} =require('@polkadot/util');
 const fetch = require('node-fetch');
 const fs = require('fs');
 const Base64 =require('crypto-js/enc-base64');
@@ -37,7 +37,6 @@ mainloop(devmode); // jum to async function to use await
 // main loop
 async function mainloop(devmode){
 
-    
     const api = await ApiPromise.create({ provider: wsProvider });      // create API object
     let secretseed="";
     // generate local keys if not yet done
