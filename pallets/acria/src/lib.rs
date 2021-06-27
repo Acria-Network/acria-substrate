@@ -9,34 +9,25 @@ use core::str;
 use core::str::FromStr;
 use crate::sp_api_hidden_includes_decl_storage::hidden_include::sp_runtime::SaturatedConversion;
 
-
-
 #[cfg(test)]
 mod mock;
 
 #[cfg(test)]
 mod tests;
 
-pub type BalanceOf<T> = <<T as Trait>::Currency as Currency<<T as frame_system::Trait>::AccountId>>::Balance;
+pub type BalanceOf<T> = <<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
 
-
-
-//pub type BalanceOf<T> = <<T as Trait>::Currency as Currency<AccountIdOf<T>>>::Balance;
-
-
-//pub type BalanceOf<T> = <<T as Trait>::Currency as Currency<<T as system::Trait>::AccountId>>::Balance;
-
-/// Configure the pallet by specifying the parameters and types on which it depends.
-pub trait Trait: frame_system::Trait {
-	/// Because this pallet emits events, it depends on the runtime's definition of an event.
-	type Event: From<Event<Self>> + Into<<Self as frame_system::Trait>::Event>;
-	/// The currency trait.
+pub trait Config: frame_system::Config + Sized {
+    /// Because this pallet emits events, it depends on the runtime's definition of an event.
+	type Event: From<Event<Self>> + Into<<Self as frame_system::Config>::Event>;
+    /// The currency trait.
     type Currency: Currency<Self::AccountId> + ReservableCurrency<Self::AccountId>;
 }
 
+
 // The RUNTIME storage
 decl_storage! {
-	trait Store for Module<T: Trait> as AcriaModule {
+	trait Store for Module<T: Config> as AcriaModule {
         // Stores the Oracle data
 		Oracle get(fn get_oracle): double_map hasher(twox_64_concat) T::AccountId, hasher(twox_64_concat) u32 => Option<Vec<u8>>;
         // Stores the query for an Oracle (not yet activated)
@@ -50,7 +41,7 @@ decl_storage! {
 
 // Events definition to inform users when important changes are made.
 decl_event!(
-	pub enum Event<T> where AccountId = <T as frame_system::Trait>::AccountId {
+	pub enum Event<T> where AccountId = <T as frame_system::Config>::AccountId {
 		/// Event documentation ends with an array that provides descriptive names for event
         /// A new Oracle was added. \[OracleId, OracleAccountid\]
 		NewOracle(u32, AccountId),
@@ -73,7 +64,7 @@ decl_event!(
 
 // Errors inform users that something went wrong.
 decl_error! {
-	pub enum Error for Module<T: Trait> {
+	pub enum Error for Module<T: Config> {
 		/// Missing value
 		NoneValue,
 		/// Value is too short to be valid
@@ -114,7 +105,7 @@ decl_error! {
 
 // Dispatchable functions to interact with this module
 decl_module! {
-	pub struct Module<T: Trait> for enum Call where origin: T::Origin {
+	pub struct Module<T: Config> for enum Call where origin: T::Origin {
 		// Errors initizialization
 		type Error = Error<T>;
 		// Events inizialitation
