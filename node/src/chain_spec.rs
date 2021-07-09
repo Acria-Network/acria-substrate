@@ -186,41 +186,36 @@ pub fn public_testnet_config() -> Result<ChainSpec, String> {
 			// authority-discovery
 			vec![
 				(
-					hex!["b2902b07056f7365bc22bf7e69c4e4fdba03e6af9c73ca6eb1703ccbc0248857"].into(),
-					hex!["cc2ea454844cc1a2e821198d9e0ce1de1aee7d014af5dd3404fc8199df89f821"].into(),
-					hex!["607712f6581e191b69046427a7e33c4713e96b4ae4654e2467c74279dc20beb2"].unchecked_into(),
-					hex!["ba630d2df03743a6441ab9221a25fc00a62e6f3b56c6920634eebb72a15fc90f"].unchecked_into(),
-					hex!["72c0d10c9cd6e44ccf5e7acf0bb1b7c4d6987dda55a36343f3d45b54ad8bfe32"].unchecked_into(),
-					hex!["f287831caa53bc1dce6f0d676ab43d248921a4c34535be8f7d7d153eda29dc3f"].unchecked_into(),
+					hex!["8ea84eb43ca667921888932b652474fa325883fd026d4ce177506629c3eb0602"].into(),
+					hex!["9889242db6e181d903971595404817fdbfacb3c06c495e555a8a5e5d32d82a4d"].into(),
+					hex!["da4fa0da32f2285e044c52264696686dac3146833b6a7206fcfebc36edd3c811"].unchecked_into(),
+					hex!["5edb7ce80dc3b00b3d9a206fc8acdd323ae494f2acac488a588acfe9339e082b"].unchecked_into(),
+					hex!["3860b0af08faa57ac38456478e19f0fd5c5d78091d5129835fdad0df5d293f1c"].unchecked_into(),
+					hex!["cafbf7f3c125bfb8dc197a069ccf9d1c0bae9bbaac434e7512eee03b3c13e419"].unchecked_into(),
 				),
 				(
-					hex!["06ee8fc0e34e40f6f2c98328d70874c6dd7d7989159634c8c87301efbcbe4470"].into(),
-					hex!["9cf9f939c16ef458e677472ff113af53e7fb9139244fcfa6fccb765aa8831019"].into(),
-					hex!["db6d2cb33abebdc024a14ef7bfbc68823660be8d1acac66770e406e484de3184"].unchecked_into(),
-					hex!["d09f879b3273d2cedab83fa741cdac328679c98914dc8dc07e359e19f0379844"].unchecked_into(),
-					hex!["8c38deff9ab24a8c49e2b4fbdc963af7cbf06f99d6aabfaa6e50bfe6ae0d071d"].unchecked_into(),
-					hex!["dcc1644697e98d4171a29074a4bfaeb49b39b6ea91a8ec5e049d23ea3c4a4134"].unchecked_into(),
-				),
-				(
-					hex!["48267bffea5e524f1c0e06cce77f0ef920be7ed9a7dd47705e181edad64f532a"].into(),
-					hex!["38594d7640612c49337f3a0bc7b39232b86f9c9c4fedec3f8b00e45d3f073a2d"].into(),
-					hex!["c8996b17688cab9bcda8dafb4dde9bab4d9b1dc81c71419fca46fedcba74a14e"].unchecked_into(),
-					hex!["568c17ce5ef308bd9544e7b16f34089a2c2329193f31577a830ffe8a023a6874"].unchecked_into(),
-					hex!["66db4135f59db92ce98cdd6c29befaf21a93f1a9059adc2326c7d371a214f97d"].unchecked_into(),
-					hex!["00858734321b53f0987a45906cbb91fe7ce1588fce03758c7c07f09022372c30"].unchecked_into(),
+					hex!["3410a7517e087ceefc18cfb20e487b158fae1b46f21cceb8ec015179d77c736c"].into(),
+					hex!["94f8c39ea69bf8ac496be89ba5e1c4042ff801479fcf2d8a468c204af55bb963"].into(),
+					hex!["2820387959af980fe28261986998664bb886d88e2e0add5d0cafb8d414c32f13"].unchecked_into(),
+					hex!["9a05fa59d615b5c77b60dad28eefce6c3b7592b7b5c01e753d620685b22ebd22"].unchecked_into(),
+					hex!["e6d5482d83e7aa35cc50ef14a3b97fe4b39a90492c64b5c1c500251b07d3601a"].unchecked_into(),
+					hex!["0x161ed5378d3edb25d834eba19bf9bd4df7a1a13dc4b89a73c7e73f278b404e5c"].unchecked_into(),
 				),
 			],
 			// Sudo
-			hex!["0c994e7589709a85128a6695254af16227f7873816ae0269aa705861c315ba1e"].into(),
+			hex!["2248607e30ad4a6faa1bda04426d13f96604db3e548bae8447328aa43148883b"].into(),
 			// Endowed accounts
 			vec![
-				hex!["0c994e7589709a85128a6695254af16227f7873816ae0269aa705861c315ba1e"].into(),
-				hex!["9e42365c1a43fe7bd886118f49a2247aabda7079c3e4c5288f41afadd7bb1963"].into(),
-				hex!["6c1371ce4b06b8d191d6f552d716c00da31aca08a291ccbdeaf0f7aeae51201b"].into(),
+				hex!["2248607e30ad4a6faa1bda04426d13f96604db3e548bae8447328aa43148883b"].into(),
+				hex!["6ef9caa1471768bfc8e032135809d570bd34ce575058bee15007263a48f4eb31"].into(),
+				hex!["cc7f7d6f78c157f83fba5bcfd8b089ebda9330379fd7d9e8e01249a92373e453"].into(),
 			],
 		),
 		// Bootnodes
-		vec!["/dns/bootnode-t1.acria.network/tcp/30334/p2p/12D3KooWKmFtS7BFtkkKWrP5ZcCpPFokmST2JFXFSsVBNeW5SXWg".parse().unwrap()],
+		vec![
+			"/ip4/104.238.186.116/tcp/30333/p2p/12D3KooWAMWnzUpCMfgSCYoYzjZYHUGf4oa6sQ1TMcrFj8e1FwNW".parse().unwrap(),
+			"/ip4/95.179.192.133/tcp/30333/p2p/12D3KooWMeBvG9w83zUHpVApHhc8Aj1u3qcWU1hKZNvMHF6sSHnm".parse().unwrap(),
+		],
 		// Telemetry
 		TelemetryEndpoints::new(vec![(TELEMETRY_URL.into(), 0)]).ok(),
 		// Protocol ID
