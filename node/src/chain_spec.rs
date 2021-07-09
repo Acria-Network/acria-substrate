@@ -199,7 +199,7 @@ pub fn public_testnet_config() -> Result<ChainSpec, String> {
 					hex!["2820387959af980fe28261986998664bb886d88e2e0add5d0cafb8d414c32f13"].unchecked_into(),
 					hex!["9a05fa59d615b5c77b60dad28eefce6c3b7592b7b5c01e753d620685b22ebd22"].unchecked_into(),
 					hex!["e6d5482d83e7aa35cc50ef14a3b97fe4b39a90492c64b5c1c500251b07d3601a"].unchecked_into(),
-					hex!["0x161ed5378d3edb25d834eba19bf9bd4df7a1a13dc4b89a73c7e73f278b404e5c"].unchecked_into(),
+					hex!["161ed5378d3edb25d834eba19bf9bd4df7a1a13dc4b89a73c7e73f278b404e5c"].unchecked_into(),
 				),
 			],
 			// Sudo
