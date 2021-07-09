@@ -212,10 +212,10 @@ pub fn public_testnet_config() -> Result<ChainSpec, String> {
 			],
 		),
 		// Bootnodes
-		vec![
-			"/ip4/104.238.186.116/tcp/30333/p2p/12D3KooWAMWnzUpCMfgSCYoYzjZYHUGf4oa6sQ1TMcrFj8e1FwNW".parse().unwrap(),
-			"/ip4/95.179.192.133/tcp/30333/p2p/12D3KooWMeBvG9w83zUHpVApHhc8Aj1u3qcWU1hKZNvMHF6sSHnm".parse().unwrap(),
-		],
+                vec![
+                        "/ip4/104.238.186.116/tcp/30333/p2p/12D3KooWAGQgm5q2bgwTocH88bsgSc5KFRHPZYi9xez8ZEka9BTv".parse().unwrap(),
+                        "/ip4/95.179.192.133/tcp/30333/p2p/12D3KooWGEF5x1SE97KbMs3VHPgLLPqM7NoSiYqR88ZEDGRSNKgP".parse().unwrap(),
+                ],
 		// Telemetry
 		TelemetryEndpoints::new(vec![(TELEMETRY_URL.into(), 0)]).ok(),
 		// Protocol ID
